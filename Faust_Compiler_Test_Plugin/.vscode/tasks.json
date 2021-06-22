@@ -1,0 +1,155 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "wp.py premake",
+			"type": "shell",
+			"windows": {
+				"command": "py"
+			},
+			"osx": {
+				"command": "python3"
+			},
+			"linux": {
+				"command": "python3"
+			},
+			"args": [
+				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"premake",
+				"${input:platform}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "wp.py build",
+			"type": "shell",
+			"windows": {
+				"command": "py"
+			},
+			"osx": {
+				"command": "python3"
+			},
+			"linux": {
+				"command": "python3"
+			},
+			"args": [
+				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"build",
+				"${input:platform}",
+				"-c${input:config}",
+				"-xx64",
+				"-tvc160"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "wp.py build Documentation",
+			"type": "shell",
+			"windows": {
+				"command": "py"
+			},
+			"osx": {
+				"command": "python3"
+			},
+			"linux": {
+				"command": "python3"
+			},
+			"args": [
+				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"build",
+				"Documentation"
+			],
+			"group": "build"
+		},
+		{
+			"label": "wp.py package",
+			"type": "shell",
+			"windows": {
+				"command": "py"
+			},
+			"osx": {
+				"command": "python3"
+			},
+			"linux": {
+				"command": "python3"
+			},
+			"args": [
+				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"package",
+				"${input:platform}",
+				"-v2022.1.0.6590"
+			]
+		},
+		{
+			"label": "wp.py generate-bundle",
+			"type": "shell",
+			"windows": {
+				"command": "py"
+			},
+			"osx": {
+				"command": "python3"
+			},
+			"linux": {
+				"command": "python3"
+			},
+			"args": [
+				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"generate-bundle",
+				"-v2022.1.0.6590"
+			]
+		}
+	],
+	"inputs": [
+		{
+			"id": "platform",
+			"type": "pickString",
+			"description": "Platform to target",
+			"options": [
+				"Authoring",
+				"Windows_vc160",
+				"Windows_vc150",
+				"Windows_vc140",
+				"Android",
+				"macOS",
+				"iOS",
+				"tvOS",
+				"Linux",
+				"Documentation"
+			]
+		},
+		{
+			"id": "config",
+			"type": "pickString",
+			"description": "Configuration",
+			"options": [
+				"Release",
+				"Profile",
+				"Debug"
+			]
+		},
+		{
+			"id": "architecture",
+			"type": "pickString",
+			"description": "Architecture",
+			"options": [
+				"x64_vc160",   // Windows
+				"x64_vc150",   // Windows
+				"x64_vc140",   // Windows
+				"Win32_vc160", // Windows
+				"Win32_vc150", // Windows
+				"Win32_vc140", // Windows
+				"arm64",       // macOS
+				"x86_64",      // macOS, Android
+				"arm64-v8a",   // Android
+				"armeabi-v7a", // Android
+				"x86"          // Android
+			]
+		}
+	]
+}

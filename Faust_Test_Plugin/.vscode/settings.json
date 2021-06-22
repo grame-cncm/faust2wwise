@@ -1,0 +1,12 @@
+{
+	"files.exclude": {
+		"**/*.sln": true,
+		"**/*.vcxproj": true,
+		"**/*.vcxproj.filters": true,
+		"**/*.vcxproj.user": true,
+		"**/*.aps": true,
+		"**/*.mk": true,
+		"**/*.tar.xz": true,
+		"Output": true
+	}
+}
