@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-Copyright (c) 2021 Audiokinetic Inc.
+Copyright (c) 2006-2022 Audiokinetic Inc.
 *******************************************************************************/
 
 #ifndef Faust_Compiler_Test_PluginConfig_H

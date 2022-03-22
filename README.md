@@ -1,6 +1,6 @@
 # faust2wwise
 
-Faust/Wwise tools :
+Faust/Wwise tools:
 
 - Faust_Test_Plugin is a preliminary work to develop a `faust2wwise` tool to *statically* compile Faust DSP code in WWise modules
 

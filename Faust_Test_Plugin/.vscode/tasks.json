@@ -16,7 +16,7 @@
 				"command": "python3"
 			},
 			"args": [
-				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"${env:WWISEROOT}/Scripts/Build/Plugins/wp.py",
 				"premake",
 				"${input:platform}"
 			],
@@ -35,7 +35,7 @@
 				"command": "python3"
 			},
 			"args": [
-				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"${env:WWISEROOT}/Scripts/Build/Plugins/wp.py",
 				"build",
 				"${input:platform}",
 				"-c${input:config}",
@@ -61,7 +61,7 @@
 				"command": "python3"
 			},
 			"args": [
-				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"${env:WWISEROOT}/Scripts/Build/Plugins/wp.py",
 				"build",
 				"Documentation"
 			],
@@ -80,7 +80,7 @@
 				"command": "python3"
 			},
 			"args": [
-				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"${env:WWISEROOT}/Scripts/Build/Plugins/wp.py",
 				"package",
 				"${input:platform}",
 				"-v2022.1.0.6590"
@@ -99,7 +99,7 @@
 				"command": "python3"
 			},
 			"args": [
-				"../../master/Wwise/Scripts/Build/Plugins/wp.py",
+				"${env:WWISEROOT}/Scripts/Build/Plugins/wp.py",
 				"generate-bundle",
 				"-v2022.1.0.6590"
 			]

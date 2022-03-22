@@ -8,7 +8,7 @@
 			"name": "Wwise Authoring",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "../../master/Wwise/Authoring/x64/Debug/bin/Wwise.exe",
+			"program": "${env:WWISEROOT}/Authoring/x64/Release/bin/Wwise.exe",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
