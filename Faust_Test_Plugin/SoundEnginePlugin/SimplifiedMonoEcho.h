@@ -4,6 +4,9 @@ Code generated with Faust 2.28.8 (https://faust.grame.fr)
 Compilation options: -lang cpp -scal -ftz 0
 ------------------------------------------------------------ */
 
+#include <faust/dsp/dsp.h>
+#include <faust/gui/meta.h>
+
 #ifndef __mydsp_H__
 #define __mydsp_H__
 
@@ -14,7 +17,7 @@ Compilation options: -lang cpp -scal -ftz 0
 #include <algorithm>
 #include <cmath>
 
-class SimplifiedMonoEcho /*: public dsp*/
+class SimplifiedMonoEcho : public dsp
 {
 
 private:
@@ -30,16 +33,16 @@ public:
 	{
 	}
 
-	virtual void instanceConstants(int sample_rate)
+	void instanceConstants(int sample_rate)
 	{
 		fSampleRate = sample_rate;
 	}
 
-	virtual void instanceResetUserInterface()
+	void instanceResetUserInterface()
 	{
 	}
 
-	virtual void instanceClear()
+	void instanceClear()
 	{
 		IOTA = 0;
 		for (int l0 = 0; (l0 < k_maxMemory); l0 = (l0 + 1))
@@ -48,29 +51,29 @@ public:
 		}
 	}
 
-	virtual void init(int sample_rate)
+	void init(int sample_rate)
 	{
 		classInit(sample_rate);
 		instanceInit(sample_rate);
 	}
-	virtual void instanceInit(int sample_rate)
+	void instanceInit(int sample_rate)
 	{
 		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
 	}
 
-	virtual SimplifiedMonoEcho *clone()
+	SimplifiedMonoEcho *clone()
 	{
 		return new SimplifiedMonoEcho();
 	}
 
-	virtual int getSampleRate()
+	int getSampleRate()
 	{
 		return fSampleRate;
 	}
 
-	virtual void compute(int count, FAUSTFLOAT **inputs, FAUSTFLOAT **outputs)
+	void compute(int count, FAUSTFLOAT **inputs, FAUSTFLOAT **outputs)
 	{
 		int mask = k_maxMemory - 1;
 
@@ -96,6 +99,25 @@ public:
 		// Skipping sanity here, for speeding up the process. 
 		m_delayTime = in_delayTime;
 	}
+
+	int getNumInputs() override {
+		return 1; 
+	}
+
+	int getNumOutputs() override {
+		return 1; // it is a simplified MONO echo right?
+	} 
+
+	void buildUserInterface(UI* ui_interface) override {
+		// left empty for now.
+	}
+
+	void metadata(Meta* m) override {
+		m->declare("name", "Mono Echo");
+		m->declare("version", "1.0");
+		m->declare("description", "A simplified mono echo effect.");
+	}
+
 };
 
 #endif
