@@ -1,0 +1,15 @@
+#include "resource.h"
+#include <windows.h>
+#include <commctrl.h>
+
+IDD_FAUST_PLUGIN DIALOGEX 0, 0, 400, 250
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Enter FAUST Code:", -1, 10,10,100,10
+    EDITTEXT        IDC_CODE_EDITOR, 10,25, 380,150,
+                    ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+    PUSHBUTTON      "Preview", IDC_BUTTON_PREVIEW, 10, 185, 80, 20
+    PUSHBUTTON      "Build", IDC_BUTTON_BUILD, 100, 185, 80, 20
+END
+

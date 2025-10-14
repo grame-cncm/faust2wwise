@@ -39,7 +39,7 @@ Plugin.authoring = {}
 -- SDK STATIC PLUGIN SECTION
 Plugin.sdk.static.includedirs = -- https://github.com/premake/premake-core/wiki/includedirs
 {
-    "C:\\Program Files\\Faust\\include"
+    "C:/Program Files/Faust/include",
 }
 Plugin.sdk.static.files = -- https://github.com/premake/premake-core/wiki/files
 {
@@ -55,13 +55,11 @@ Plugin.sdk.static.excludes = -- https://github.com/premake/premake-core/wiki/rem
 Plugin.sdk.static.links = -- https://github.com/premake/premake-core/wiki/links
 {
     "libfaust",
-    "LLVM-C"
 }
 Plugin.sdk.static.libsuffix = "FX"
 Plugin.sdk.static.libdirs = -- https://github.com/premake/premake-core/wiki/libdirs
 {
-    "C:\\Program Files\\Faust\\lib",
-    "C:\\Program Files\\LLVM\\lib"
+    "C:/Program Files/Faust/lib",
 }
 Plugin.sdk.static.defines = -- https://github.com/premake/premake-core/wiki/defines
 {
@@ -70,6 +68,7 @@ Plugin.sdk.static.defines = -- https://github.com/premake/premake-core/wiki/defi
 -- SDK SHARED PLUGIN SECTION
 Plugin.sdk.shared.includedirs =
 {
+    "C:/Program Files/Faust/include",
 }
 Plugin.sdk.shared.files =
 {
@@ -92,6 +91,7 @@ Plugin.sdk.shared.defines =
 -- AUTHORING PLUGIN SECTION
 Plugin.authoring.includedirs =
 {
+    "C:/Program Files/Faust/include",
 }
 Plugin.authoring.files =
 {
