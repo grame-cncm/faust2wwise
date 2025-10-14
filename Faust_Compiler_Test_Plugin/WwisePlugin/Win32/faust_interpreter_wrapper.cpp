@@ -39,13 +39,19 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
     // Define compilation options (none for now, but could add e.g. "-vec")
     // int argc = 0;
     // const char** argv = nullptr;
+
+    // arch file should be passed as a POSIX path : @TODO Improve that
+    std::string archfile_str = std::filesystem::path(faust_dspdir + "/wwise.cpp").lexically_normal().string();
+    std::replace(archfile_str.begin(), archfile_str.end(), '\\', '/');
+    const char* archfile = archfile_str.c_str();
     const char* argv[] = { 
+		"-a", archfile,
         "-I", faust_includedir.c_str(), 
         "-I", faust_dspdir.c_str(),
         "-lang", "cpp", 
         "-json"
     };
-    int argc = 7;
+    int argc = 9;
 
     std::string errorMessage;
     interpreter_dsp_factory* newFactory = createInterpreterDSPFactoryFromString(

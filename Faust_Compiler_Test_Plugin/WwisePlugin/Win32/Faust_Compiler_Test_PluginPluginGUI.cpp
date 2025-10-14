@@ -27,13 +27,13 @@ the specific language governing permissions and limitations under the License.
 
 #include "Faust_Compiler_Test_PluginPluginGUI.h"
 #include "../resource.h"
+#include "utils.h"
 #include <AK/AkWwiseSDKVersion.h>
 #include <windows.h>
 #include <string>
 #include <sstream>
 #include <locale>
 #include <codecvt>
-#include "utils.h"
 
 inline std::string wstring2string(const std::wstring wstr)
 {

@@ -29,7 +29,6 @@ the specific language governing permissions and limitations under the License.
 #include "../Faust_Compiler_Test_PluginPlugin.h"
 #include <string>
 #include "faust_interpreter_wrapper.h"
-#include <filesystem>
 
 enum WM_STATE{
     INIT_STATE=1,
