@@ -27,6 +27,16 @@ the specific language governing permissions and limitations under the License.
 #pragma once
 
 #include "../Faust_Compiler_Test_PluginPlugin.h"
+#include <string>
+#include "faust_interpreter_wrapper.h"
+#include <filesystem>
+
+enum WM_STATE{
+    INIT_STATE=1,
+    RUN_STATE=2,
+    EXIT_STATE=3,
+    NONINIT_STATE=0
+};
 
 class Faust_Compiler_Test_PluginPluginGUI final
 	: public AK::Wwise::Plugin::PluginMFCWindows<>
@@ -34,5 +44,42 @@ class Faust_Compiler_Test_PluginPluginGUI final
 {
 public:
 	Faust_Compiler_Test_PluginPluginGUI();
+    HINSTANCE GetResourceHandle() const override;
 
+    bool GetDialog(
+        AK::Wwise::Plugin::eDialog in_eDialog,
+        UINT& out_uiDialogID,
+        AK::Wwise::Plugin::PopulateTableItem*& out_pTable
+    ) const override;
+
+    bool WindowProc(
+        AK::Wwise::Plugin::eDialog in_eDialog,
+        HWND in_hWnd,
+        uint32_t in_message,
+        WPARAM in_wParam,
+        LPARAM in_lParam,
+        LRESULT& out_lResult) override;
+
+private:
+    std::wstring dspCode;
+    HWND faustWnd,editorWnd;
+    
+    WM_STATE state;
+    
+    bool SetCodeEditorText(); 
+    bool SaveCodeEditorText();
+    bool OnPreviewButtonClicked();
+    bool OnBuildButtonClicked();
+    void ShowPopupWindow();
+
+    bool loadLastSavedCode();
+    bool saveCurrentCodeState();
+
+    void debugPrint(std::wstring, size_t);
+
+    FaustInterpreterWrapper faustInterpreter;
+    std::wstring entry_code;
+
+    const char* wwiseRoot;
+    std::filesystem::path tempDir;
 };
