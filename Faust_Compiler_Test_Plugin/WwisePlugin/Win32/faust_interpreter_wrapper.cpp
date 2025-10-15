@@ -2,19 +2,31 @@
 #include <faust/dsp/libfaust.h> 
 #include "utils.h"
 #include <iostream>
+#include <thread>
+
+static inline void normalizePath(std::string& path) {
+    std::replace(path.begin(), path.end(), '\\', '/');
+}
 
 FaustInterpreterWrapper::FaustInterpreterWrapper(std::string nameApp)
     : factory(nullptr)
     , name_app(nameApp)
+    , cppfile("")
 {
     faust_includedir = execCommand("faust --includedir");
     faust_dspdir = execCommand("faust --dspdir");
+
+    normalizePath(faust_includedir);
+    normalizePath(faust_dspdir);
+
+    archfile = faust_dspdir + "/wwise.cpp";
     // TODO: store in a file maybe?
 }
 
 void FaustInterpreterWrapper::set_exportPath(const std::string& path)
 {
     exportPath = path;
+    normalizePath(exportPath);
 }
 
 FaustInterpreterWrapper::~FaustInterpreterWrapper()
@@ -39,13 +51,8 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
     // Define compilation options (none for now, but could add e.g. "-vec")
     // int argc = 0;
     // const char** argv = nullptr;
-
-    // arch file should be passed as a POSIX path : @TODO Improve that
-    std::string archfile_str = std::filesystem::path(faust_dspdir + "/wwise.cpp").lexically_normal().string();
-    std::replace(archfile_str.begin(), archfile_str.end(), '\\', '/');
-    const char* archfile = archfile_str.c_str();
     const char* argv[] = { 
-		"-a", archfile,
+		"-a", archfile.c_str(),
         "-I", faust_includedir.c_str(), 
         "-I", faust_dspdir.c_str(),
         "-lang", "cpp", 
@@ -80,6 +87,7 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
     // name_app = factory->getName(); --> @TODO fix bug : Exception thrown at 0x00007FFA23425369 in Wwise.exe: Microsoft C++ exception: faustexception at memory location 0x000000C2BFAFE9C0. Unhandled exception at 0x00007FFA23425369 (KernelBase.dll) in Wwise.exe: 0xC000041D: An unhandled exception was encountered during a user callback.
     
     exportCPP();
+    compileCPP_async();
 
     return true;
 
@@ -98,16 +106,16 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
 
 bool FaustInterpreterWrapper::exportCPP() {
     
-    auto tempDir = createTempDir();
-    std::string filePath = tempDir.string() + '/' + name_app + ".cpp";
+    tempDir = createTempDir();
+    cppfile = tempDir.string() + '/' + name_app + ".cpp";
 
     if (!factory) {
         std::cerr << "No compiled DSP factory available for export." << std::endl;
         return false;
     }
 
-    if (!writeInterpreterDSPFactoryToBitcodeFile(factory, filePath)) {
-        std::cerr << "Failed to write DSP bytecode to file: " << filePath << std::endl;
+    if (!writeInterpreterDSPFactoryToBitcodeFile(factory, cppfile)) {
+        std::cerr << "Failed to write DSP bytecode to file: " << cppfile << std::endl;
         return false;
     }
 
@@ -115,6 +123,32 @@ bool FaustInterpreterWrapper::exportCPP() {
     moveFile(name_app+".json", tempDir.string() + '/' + name_app + ".json");
 
     return true;
+}
+
+void FaustInterpreterWrapper::compileCPP_async()
+{
+    // @TODO integration dependent path --> will be installed in smth like : faust/architecture/wwise/interpreter/CMakeLists.txt
+    std::filesystem::path currFile = __FILE__;  // CMakeLists.txt is located in the same dir
+    std::string cmakelists_dir = currFile.parent_path().string(); // dir where the CMakeLists.txt is located
+    std::string cmd = 
+        "cmake -B \"" + tempDir.string() + "\" "
+        "-S \"" + cmakelists_dir + "\" "
+        "-DFAUST_INCLUDE_DIR=\"" + faust_includedir + "\" "
+        "-DFAUST_LIBRARY=\"" + faust_dspdir + "\" "
+        "-DPROJECT_NAME=" + name_app + " "
+        "-DFAUST_CPP_FILE=\"" + cppfile + "\" "
+        "&& cmake --build \"" + tempDir.string() + "\" --config Release";
+
+    std::cout << "Running: " << cmd << std::endl;
+
+    std::thread([cmd]() {
+        int result = std::system(cmd.c_str());
+        if(result != 0)
+            std::cerr << "Build command failed with code " << result << std::endl;
+        else
+            std::cout << "Build succeeded!" << std::endl;
+    }).detach();
+
 }
 
 bool FaustInterpreterWrapper::moveFile(const std::string& sourcePath, const std::string& destPath)
@@ -173,7 +207,7 @@ std::filesystem::path FaustInterpreterWrapper::createTempDir()
     auto now_time_t = std::chrono::system_clock::to_time_t(now);
     timestamp << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
 
-    std::filesystem::path tempDir = std::filesystem::path(exportPath) / ("faust_" + timestamp.str());
+    std::filesystem::path tempDir = std::filesystem::path( exportPath + "/faust_" + timestamp.str());
 
     try {
         std::filesystem::create_directories(tempDir);

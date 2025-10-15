@@ -32,6 +32,11 @@ private:
 
     std::string exportPath;
 
+    std::filesystem::path tempDir;
+    std::string cppfile;
+    std::string archfile;
+    // @TODO Wrap those paths
+
     const std::string default_entry_code = R"FAUST(
 import("stdfaust.lib");
 
@@ -42,9 +47,9 @@ declare name "myPlugin"; // declare name of your plugin
 
     //filePath -> should be a temporary dir for storing the dynamic plugin.
     bool exportCPP();
+    void compileCPP_async();
     std::filesystem::path createTempDir();
     bool moveFile(const std::string&, const std::string&);
-
 };
 
 #endif
