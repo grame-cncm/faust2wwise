@@ -15,23 +15,19 @@ public:
 
     std::string get_default_entry_code();
 
-    // these two should be united.. This is the preview function. 
-    // Compiles a cpp file and integrates it directly into a dynamic plugin.
-    bool compile(const std::string& dspCode);
+    // Compiles a cpp file and recompiles it directly into a dynamic library.
+    bool previewPlugin(const std::string& dspCode);
     
     bool buildPlugin(const std::string& dspCode);
 private:
 
-    std::string name_app;
-
     interpreter_dsp_factory* factory;
     std::string lastDSPCode, currentSHA;
 
+    std::string name_app;
     std::string faust_includedir;
     std::string faust_dspdir;
-
     std::string exportPath;
-
     std::filesystem::path tempDir;
     std::string cppfile;
     std::string archfile;
@@ -45,11 +41,10 @@ declare name "myPlugin"; // declare name of your plugin
 // you faust dsp code here..
 )FAUST";
 
-    //filePath -> should be a temporary dir for storing the dynamic plugin.
     bool exportCPP();
-    void compileCPP_async();
-    std::filesystem::path createTempDir();
+    bool compileCPP();
     bool moveFile(const std::string&, const std::string&);
+    std::filesystem::path createTempDir();
 };
 
 #endif

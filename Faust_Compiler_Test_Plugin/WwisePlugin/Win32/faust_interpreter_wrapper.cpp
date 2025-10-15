@@ -43,8 +43,9 @@ std::string FaustInterpreterWrapper::get_default_entry_code()
     return default_entry_code;
 }
 
-bool FaustInterpreterWrapper::compile(const std::string& dspCode)
+bool FaustInterpreterWrapper::previewPlugin(const std::string& dspCode)
 {
+
     // directly create a new dsp factory to exploit its caching ability 
     // const std::string &name_app, const std::string &dsp_content, int argc, const char *argv[], std::string &error_msg)
     // TODO: fix compilation options
@@ -52,7 +53,7 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
     // int argc = 0;
     // const char** argv = nullptr;
     const char* argv[] = { 
-		"-a", archfile.c_str(),
+        "-a", archfile.c_str(),
         "-I", faust_includedir.c_str(), 
         "-I", faust_dspdir.c_str(),
         "-lang", "cpp", 
@@ -74,7 +75,6 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
         std::cerr << "Faust compilation failed: " << errorMessage << std::endl;
         return false;
     }
-    else std::cerr <<" Faust compilation success!"<<std::endl;
 
     if(factory && factory != newFactory){
         deleteInterpreterDSPFactory(factory);
@@ -85,23 +85,21 @@ bool FaustInterpreterWrapper::compile(const std::string& dspCode)
     lastDSPCode = dspCode;
     currentSHA = factory->getSHAKey();
     // name_app = factory->getName(); --> @TODO fix bug : Exception thrown at 0x00007FFA23425369 in Wwise.exe: Microsoft C++ exception: faustexception at memory location 0x000000C2BFAFE9C0. Unhandled exception at 0x00007FFA23425369 (KernelBase.dll) in Wwise.exe: 0xC000041D: An unhandled exception was encountered during a user callback.
+
+    bool exported = exportCPP();
+    if (!exported)
+    {
+        std::cerr << "Cpp file could not be exported."<<std::endl;
+        return false;
+    }
     
-    exportCPP();
-    compileCPP_async();
-
+    bool compiled = compileCPP();
+    if (!compiled)
+    {    
+        std::cerr << "Cpp file could not be compiled."<<std::endl;
+        return false;
+    }
     return true;
-
-    // if (factory && dspCode == lastDSPCode){
-    //     return true; // already compiled
-    // }
-
-    // // if new code is used
-    // // TODO: Use a tool to check if needs new cache?
-    // if (factory)
-    // {
-    //     deleteInterpreterDSPFactory(factory);
-    //     factory = nullptr;
-    // }
 }
 
 bool FaustInterpreterWrapper::exportCPP() {
@@ -125,7 +123,7 @@ bool FaustInterpreterWrapper::exportCPP() {
     return true;
 }
 
-void FaustInterpreterWrapper::compileCPP_async()
+bool FaustInterpreterWrapper::compileCPP()
 {
     // @TODO integration dependent path --> will be installed in smth like : faust/architecture/wwise/interpreter/CMakeLists.txt
     std::filesystem::path currFile = __FILE__;  // CMakeLists.txt is located in the same dir
@@ -141,14 +139,14 @@ void FaustInterpreterWrapper::compileCPP_async()
 
     std::cout << "Running: " << cmd << std::endl;
 
-    std::thread([cmd]() {
-        int result = std::system(cmd.c_str());
-        if(result != 0)
-            std::cerr << "Build command failed with code " << result << std::endl;
-        else
-            std::cout << "Build succeeded!" << std::endl;
-    }).detach();
-
+    int result = std::system(cmd.c_str());
+    if(result != 0)
+    {
+        std::cerr << "Build command failed with code " << result << std::endl;
+        return false;
+    }
+    std::cout << "Build succeeded!" << std::endl;
+    return true;
 }
 
 bool FaustInterpreterWrapper::moveFile(const std::string& sourcePath, const std::string& destPath)
@@ -200,6 +198,7 @@ bool FaustInterpreterWrapper::buildPlugin(const std::string& dspCode) {
     return result == 0;
 }
 
+// TODO: discard timestamp, and use the plugin name for the new directory.
 std::filesystem::path FaustInterpreterWrapper::createTempDir()
 {
     std::ostringstream timestamp;

@@ -34,6 +34,7 @@ the specific language governing permissions and limitations under the License.
 #include <sstream>
 #include <locale>
 #include <codecvt>
+#include <thread>
 
 inline std::string wstring2string(const std::wstring wstr)
 {
@@ -186,16 +187,21 @@ bool Faust_Compiler_Test_PluginPluginGUI::SaveCodeEditorText()    // rename that
 
 bool Faust_Compiler_Test_PluginPluginGUI::OnPreviewButtonClicked()
 {   
+    // Important: this function runs asynchronously.
     
     if (SaveCodeEditorText()){
 
         // preview not supported yet
         ShowPopupWindow();
 
-                    // just for testing things out..
-                    debugPrint(dspCode, dspCode.size());
-                    AKPLATFORM::OutputDebugMsg("Faust :: button was pressed!");
-                    faustInterpreter.compile(wstring2string(dspCode));
+        // build plugin dll asynchronously
+        std::thread([this]() {
+                
+                faustInterpreter.previewPlugin(wstring2string(this->dspCode));
+                // raise a flag or something. i.e. myatomic.store(COMPILED)
+                // or set an internal parameter to notify the SoundEngine
+
+        }).detach();
 
         return true; // return the result of the faust2wwise dynamic compilation..
     }
