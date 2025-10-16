@@ -3,6 +3,8 @@
 
 #include <atomic>
 
+#include "dll_state.h"
+
 /*!
  * @brief Singleton class.
 */
@@ -23,15 +25,15 @@ public:
     FaustPlugin& operator=(FaustPlugin&&) = delete; //  delete move assignement operator
 
 
-    void setPluginState(int);
-    int getPluginState();
+    void setPluginState(DLLState);
+    DLLState getPluginState();
     
 private:
     /*! @brief Class constructor.
     */
     FaustPlugin();
     
-    std::atomic<int> dllState;
+    std::atomic<DLLState> dllState;
 
 };
 

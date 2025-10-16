@@ -42,7 +42,7 @@ std::string FaustInterpreterWrapper::get_default_entry_code()
     return default_entry_code;
 }
 
-bool FaustInterpreterWrapper::previewPlugin(const std::string& dspCode)
+bool FaustInterpreterWrapper::compileDSP(const std::string& dspCode)
 {
 
     // directly create a new dsp factory to exploit its caching ability 
@@ -71,7 +71,7 @@ bool FaustInterpreterWrapper::previewPlugin(const std::string& dspCode)
 
     if (!newFactory) 
     {
-        std::cerr << "Faust compilation failed: " << errorMessage << std::endl;
+        std::cerr << "Faust compilation failed : " << errorMessage << std::endl;
         return false;
     }
 
@@ -84,20 +84,6 @@ bool FaustInterpreterWrapper::previewPlugin(const std::string& dspCode)
     lastDSPCode = dspCode;
     currentSHA = factory->getSHAKey();
     // name_app = factory->getName(); --> @TODO fix bug : Exception thrown at 0x00007FFA23425369 in Wwise.exe: Microsoft C++ exception: faustexception at memory location 0x000000C2BFAFE9C0. Unhandled exception at 0x00007FFA23425369 (KernelBase.dll) in Wwise.exe: 0xC000041D: An unhandled exception was encountered during a user callback.
-
-    bool exported = exportCPP();
-    if (!exported)
-    {
-        std::cerr << "Cpp file could not be exported."<<std::endl;
-        return false;
-    }
-    
-    bool compiled = compileCPP();
-    if (!compiled)
-    {    
-        std::cerr << "Cpp file could not be compiled."<<std::endl;
-        return false;
-    }
     return true;
 }
 
@@ -141,6 +127,7 @@ bool FaustInterpreterWrapper::compileCPP()
     int result = std::system(cmd.c_str());
     if(result != 0)
     {
+        std::cerr << "Cpp file could not be compiled."<<std::endl;
         std::cerr << "Build command failed with code " << result << std::endl;
         return false;
     }

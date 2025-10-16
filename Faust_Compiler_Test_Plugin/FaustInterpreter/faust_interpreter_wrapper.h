@@ -15,9 +15,11 @@ public:
 
     std::string get_default_entry_code();
 
-    // Compiles a cpp file and recompiles it directly into a dynamic library.
-    bool previewPlugin(const std::string& dspCode);
-    
+    // Preview related functions..
+    bool compileDSP(const std::string& dspCode); // Compiles a cpp file and recompiles it directly into a dynamic library.
+    bool exportCPP(); // moves the cpp file and the json file into the appropriate export dir.
+    bool compileCPP(); // compiles the cpp file into a dynamic library.
+
     bool buildPlugin(const std::string& dspCode);
 
     std::string get_dll_path()
@@ -48,8 +50,6 @@ declare name "myPlugin"; // declare name of your plugin
 // you faust dsp code here..
 )FAUST";
 
-    bool exportCPP();
-    bool compileCPP();
     bool moveFile(const std::string&, const std::string&);
     std::filesystem::path createTempDir();
 };

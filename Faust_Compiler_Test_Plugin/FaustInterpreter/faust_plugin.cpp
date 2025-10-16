@@ -1,17 +1,17 @@
 #include "faust_plugin.h"
 
 FaustPlugin::FaustPlugin()
-    :dllState(0)
+    :dllState(DLLState::UNSET)
 {
 
 }
 
-void FaustPlugin::setPluginState(int state)
+void FaustPlugin::setPluginState(DLLState state)
 {
     dllState.store(state);
 }
 
-int FaustPlugin::getPluginState()
+DLLState FaustPlugin::getPluginState()
 {
     return dllState.load();
 }
