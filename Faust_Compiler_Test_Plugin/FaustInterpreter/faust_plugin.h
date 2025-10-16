@@ -4,6 +4,7 @@
 #include <atomic>
 
 #include "dll_state.h"
+#include "runtime_link.h"
 
 /*!
  * @brief Singleton class.
@@ -27,11 +28,14 @@ public:
 
     void setPluginState(DLLState);
     DLLState getPluginState();
+    void loadDynamicLib(const std::string&);
     
 private:
     /*! @brief Class constructor.
     */
     FaustPlugin();
+    
+    void* dspLib; // temporary pointer to library
     
     std::atomic<DLLState> dllState;
 

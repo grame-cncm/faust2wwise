@@ -27,7 +27,7 @@ the specific language governing permissions and limitations under the License.
 
 #include "Faust_Compiler_Test_PluginPluginGUI.h"
 #include "../resource.h"
-#include "utils.h"
+#include "syscall.h"
 #include <AK/AkWwiseSDKVersion.h>
 #include <windows.h>
 #include <string>
@@ -57,7 +57,7 @@ Faust_Compiler_Test_PluginPluginGUI::Faust_Compiler_Test_PluginPluginGUI()
     , editorWnd(nullptr)
     , state(NONINIT_STATE)
 {
-    wwiseRoot = getEnvVar("WWISEROOT");
+    wwiseRoot = SysCall::getEnvVar("WWISEROOT");
     tempDir = std::filesystem::path(wwiseRoot) / "_f2wTemp_";
     if (!std::filesystem::exists(tempDir)) {
         std::filesystem::create_directory(tempDir);
@@ -220,8 +220,8 @@ bool Faust_Compiler_Test_PluginPluginGUI::OnPreviewButtonClicked()
                     return;
                 }
 
-                std::string dllpath = faustInterpreter.get_dll_path(); 
                 faust_plugin.setPluginState(DLLState::DLL_COMPILED);
+                faust_plugin.loadDynamicLib(faustInterpreter.get_dll_path());
 
         }).detach();
 

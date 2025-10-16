@@ -9,6 +9,7 @@ enum DLLState{
     FAIL_EXPORT_CPP,
     FAIL_COMPILE_CPP,
     DLL_COMPILED,
+    FAIL_LINKAGE,
     LINKED
 };
 
