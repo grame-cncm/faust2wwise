@@ -29,6 +29,7 @@ the specific language governing permissions and limitations under the License.
 #include "../Faust_Compiler_Test_PluginPlugin.h"
 #include <string>
 #include "faust_interpreter_wrapper.h"
+#include "faust_plugin.h"
 
 enum WM_STATE{
     INIT_STATE=1,
@@ -81,4 +82,6 @@ private:
 
     const char* wwiseRoot;
     std::filesystem::path tempDir;
+
+    FaustPlugin& faust_plugin = FaustPlugin::getInstance();
 };

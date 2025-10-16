@@ -19,6 +19,13 @@ public:
     bool previewPlugin(const std::string& dspCode);
     
     bool buildPlugin(const std::string& dspCode);
+
+    std::string get_dll_path()
+    {
+        return tempDir.string() + "/Release/" + name_app + ".dll"; 
+    }
+
+
 private:
 
     interpreter_dsp_factory* factory;

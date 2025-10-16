@@ -110,6 +110,12 @@ void Faust_Compiler_Test_PluginFX::Execute(AkAudioBuffer* io_pBuffer)
             ++uFramesProcessed;
         }
     }
+
+    bool dllReady = myFaustPlugin.getPluginState();
+    if (dllReady)
+    {
+        AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is ready!");
+    }
 }
 
 AKRESULT Faust_Compiler_Test_PluginFX::TimeSkip(AkUInt32 in_uFrames)

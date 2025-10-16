@@ -2,7 +2,6 @@
 #include <faust/dsp/libfaust.h> 
 #include "utils.h"
 #include <iostream>
-#include <thread>
 
 static inline void normalizePath(std::string& path) {
     std::replace(path.begin(), path.end(), '\\', '/');
