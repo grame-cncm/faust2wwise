@@ -111,8 +111,8 @@ void Faust_Compiler_Test_PluginFX::Execute(AkAudioBuffer* io_pBuffer)
         }
     }
 
-    bool dllReady = myFaustPlugin.getPluginState();
-    if (dllReady)
+    DLLState dllstate = myFaustPlugin.getPluginState();
+    if (dllstate == DLL_COMPILED) // @TODO change to DLL_LINKED after implementing the linking stage.
     {
         AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is ready!");
     }

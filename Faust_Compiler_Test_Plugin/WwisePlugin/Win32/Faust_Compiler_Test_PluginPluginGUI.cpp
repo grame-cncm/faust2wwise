@@ -196,12 +196,33 @@ bool Faust_Compiler_Test_PluginPluginGUI::OnPreviewButtonClicked()
 
         // build plugin dll asynchronously
         std::thread([this]() {
+
+                faust_plugin.setPluginState(DLLState::PENDING_COMPILE);
                 
-                bool dllCompiled = faustInterpreter.previewPlugin(wstring2string(this->dspCode));
-                // raise a flag or something. i.e. myatomic.store(COMPILED)
-                // or set an internal parameter to notify the SoundEngine
+                bool dspCompiled = faustInterpreter.compileDSP(wstring2string(this->dspCode));
+                if (!dspCompiled)
+                {
+                    faust_plugin.setPluginState(DLLState::FAIL_COMPILE_DSP);   
+                    return;
+                }
+
+                bool exported = faustInterpreter.exportCPP();
+                if (!exported)
+                {
+                    faust_plugin.setPluginState(DLLState::FAIL_EXPORT_CPP);   
+                    return;
+                }
+                
+                bool compiled = faustInterpreter.compileCPP();
+                if (!compiled)
+                {    
+                    faust_plugin.setPluginState(DLLState::FAIL_COMPILE_CPP);   
+                    return;
+                }
+
                 std::string dllpath = faustInterpreter.get_dll_path(); 
-                faust_plugin.setPluginState(dllCompiled);
+                faust_plugin.setPluginState(DLLState::DLL_COMPILED);
+
         }).detach();
 
         return true; // return the result of the faust2wwise dynamic compilation..
