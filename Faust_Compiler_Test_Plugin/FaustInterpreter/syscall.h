@@ -10,9 +10,12 @@
 #include <cstdlib>
 
 /* IMPORTANT : These functions require running Wwise as administrator to run successfully. */
+namespace SysCall{
+    
+    const char* getEnvVar(const std::string& varName);
 
-const char* getEnvVar(const std::string& varName);
+    std::string execCommand(const std::string& cmd);
 
-std::string execCommand(const std::string& cmd);
+}
 
 #endif

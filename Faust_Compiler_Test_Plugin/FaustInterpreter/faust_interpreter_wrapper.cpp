@@ -1,6 +1,6 @@
 #include "faust_interpreter_wrapper.h"
 #include <faust/dsp/libfaust.h> 
-#include "utils.h"
+#include "syscall.h"
 #include <iostream>
 
 static inline void normalizePath(std::string& path) {
@@ -12,8 +12,8 @@ FaustInterpreterWrapper::FaustInterpreterWrapper(std::string nameApp)
     , name_app(nameApp)
     , cppfile("")
 {
-    faust_includedir = execCommand("faust --includedir");
-    faust_dspdir = execCommand("faust --dspdir");
+    faust_includedir = SysCall::execCommand("faust --includedir");
+    faust_dspdir = SysCall::execCommand("faust --dspdir");
 
     normalizePath(faust_includedir);
     normalizePath(faust_dspdir);

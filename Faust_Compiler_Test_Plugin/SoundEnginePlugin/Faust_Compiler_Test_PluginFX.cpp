@@ -114,7 +114,11 @@ void Faust_Compiler_Test_PluginFX::Execute(AkAudioBuffer* io_pBuffer)
     DLLState dllstate = myFaustPlugin.getPluginState();
     if (dllstate == DLL_COMPILED) // @TODO change to DLL_LINKED after implementing the linking stage.
     {
-        AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is ready!");
+        AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is compiled!");
+    }
+    else if (dllstate == LINKED)
+    {
+        AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is linked!");
     }
 }
 
