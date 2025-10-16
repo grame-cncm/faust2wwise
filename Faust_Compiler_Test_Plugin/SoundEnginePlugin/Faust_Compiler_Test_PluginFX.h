@@ -32,6 +32,8 @@ the specific language governing permissions and limitations under the License.
 #include <faust/dsp/libfaust.h>
 #include <faust/dsp/interpreter-dsp.h>
 
+#include "faust_plugin.h"
+
 /// See https://www.audiokinetic.com/library/edge/?source=SDK&id=soundengine__plugins__effects.html
 /// for the documentation about effect plug-ins
 class Faust_Compiler_Test_PluginFX
@@ -69,7 +71,8 @@ private:
     AK::IAkPluginMemAlloc* m_pAllocator;
     AK::IAkEffectPluginContext* m_pContext;
 
-    dsp_factory* m_DSPFactory;
+    dsp_factory* m_DSPFactory; // @TODO clean these..
+    FaustPlugin& myFaustPlugin = FaustPlugin::getInstance();
 };
 
 #endif // Faust_Compiler_Test_PluginFX_H
