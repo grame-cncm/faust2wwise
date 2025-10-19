@@ -26,13 +26,15 @@ the specific language governing permissions and limitations under the License.
 
 #include "Faust_Interpreter_Test_PluginPluginGUI.h"
 #include "../resource.h"
-#include "syscall.h"
+#include "PluginUtils/syscall.h"
 #include <AK/AkWwiseSDKVersion.h>
 #include <windows.h>
 #include <sstream>
 #include <locale>
 #include <codecvt>
 #include <thread>
+
+#define LASTCODE_FNAME "last_code.dsp"
 
 inline std::string wstring2string(const std::wstring wstr)
 {
@@ -53,17 +55,15 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
     : dspCode(L"")
     , faustWnd(nullptr)
     , editorWnd(nullptr)
-    , state(NONINIT_STATE)
+    , state(WM_STATE::NONINIT_STATE)
+    , faustInterpreter(faustPluginLoader.getConfiguration())
 {
-    wwiseRoot = SysCall::getEnvVar("WWISEROOT");
-    tempDir = std::filesystem::path(wwiseRoot) / "_f2wTemp_";
-    if (!std::filesystem::exists(tempDir)) {
-        std::filesystem::create_directory(tempDir);
-    }
-
-    faustInterpreter.set_exportPath(tempDir.string());
-
+    
+    // PluginConfiguration& cfg = faustPluginLoader.getConfiguration();
+    std::string exportPath = faustInterpreter.getExportPath();
+    codePath = string2wstring(exportPath + "/" + std::string(LASTCODE_FNAME));
     entry_code = string2wstring(faustInterpreter.get_default_entry_code());
+    
     AKPLATFORM::OutputDebugMsg("Faust :: Constructor got called!\n");
 }
 
@@ -103,7 +103,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
         case INIT_STATE:
         {
             SetCodeEditorText();
-            state = RUN_STATE;
+            state = WM_STATE::RUN_STATE;
         }
     }
     
@@ -114,7 +114,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             // AKPLATFORM::OutputDebugMsg("Faust :: INITDIALOG got called!\n");
             faustWnd = in_hWnd;
             editorWnd = GetDlgItem(faustWnd, IDC_CODE_EDITOR);
-            state = INIT_STATE;
+            state = WM_STATE::INIT_STATE;
             bRet=TRUE;
             break;  
         }
@@ -142,7 +142,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             AKPLATFORM::OutputDebugMsg("Faust :: WM_DESTROY got called!\n");
             SaveCodeEditorText();
             faustWnd = editorWnd = nullptr;
-            state = EXIT_STATE;
+            state = WM_STATE::EXIT_STATE;
             bRet = TRUE;
             break;
         }
@@ -189,37 +189,44 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
     
     if (SaveCodeEditorText()){
 
-        // preview not supported yet
-        ShowPopupWindow();
-
         // build plugin dll asynchronously
         std::thread([this]() {
 
-                faust_plugin.setPluginState(DLLState::PENDING_COMPILE);
+                faustPluginLoader.setPluginState(PluginState::PENDING_COMPILATION);
                 
                 bool dspCompiled = faustInterpreter.compileDSP(wstring2string(this->dspCode));
                 if (!dspCompiled)
                 {
-                    faust_plugin.setPluginState(DLLState::FAIL_COMPILE_DSP);   
+                    faustPluginLoader.setPluginState(PluginState::ERR_COMPILE_DSP);   
                     return;
                 }
 
                 bool exported = faustInterpreter.exportCPP();
                 if (!exported)
                 {
-                    faust_plugin.setPluginState(DLLState::FAIL_EXPORT_CPP);   
+                    faustPluginLoader.setPluginState(PluginState::ERR_EXPORT_CPP);   
                     return;
                 }
                 
-                bool compiled = faustInterpreter.compileCPP();
-                if (!compiled)
-                {    
-                    faust_plugin.setPluginState(DLLState::FAIL_COMPILE_CPP);   
+                exported = faustInterpreter.exportJSON();
+                if (!exported)
+                {
+                    faustPluginLoader.setPluginState(PluginState::ERR_EXPORT_JSON);   
                     return;
                 }
 
-                faust_plugin.setPluginState(DLLState::DLL_COMPILED);
-                faust_plugin.loadDynamicLib(faustInterpreter.get_dll_path());
+                bool compiled = faustInterpreter.compileCPP();
+                if (!compiled)
+                {    
+                    faustPluginLoader.setPluginState(PluginState::ERR_COMPILE_CPP);   
+                    return;
+                }
+                faustPluginLoader.setPluginState(PluginState::DLL_COMPILED);
+                
+                faustPluginLoader.initPlugin();
+
+                // preview not supported yet
+                ShowPopupWindow();
 
         }).detach();
 
@@ -252,7 +259,6 @@ void Faust_Interpreter_Test_PluginPluginGUI::ShowPopupWindow()
 
 bool Faust_Interpreter_Test_PluginPluginGUI::loadLastSavedCode()
 {
-    std::filesystem::path codePath = tempDir / "last_code.dsp";
 
     FILE* file = _wfopen(codePath.c_str(), L"rb");  // binary mode to preserve UTF-16 encoding
     if (!file) return false;
@@ -280,7 +286,6 @@ bool Faust_Interpreter_Test_PluginPluginGUI::loadLastSavedCode()
 
 bool Faust_Interpreter_Test_PluginPluginGUI::saveCurrentCodeState()
 {
-    std::filesystem::path codePath = tempDir / "last_code.dsp";
 
     FILE* file = _wfopen(codePath.c_str(), L"wb");  // binary mode to preserve encoding
     if (!file) return false;

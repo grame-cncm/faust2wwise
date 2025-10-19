@@ -1,34 +1,45 @@
-#include "faust_interpreter_wrapper.h"
+#include "interpreter_wrapper.h"
+#include "PluginUtils/syscall.h"
 #include <faust/dsp/libfaust.h> 
-#include "syscall.h"
 #include <iostream>
+
+#define STORAGE_DIRNAME "_f2wTemp_"
 
 static inline void normalizePath(std::string& path) {
     std::replace(path.begin(), path.end(), '\\', '/');
 }
 
-FaustInterpreterWrapper::FaustInterpreterWrapper(std::string nameApp)
+InterpreterWrapper::InterpreterWrapper(PluginConfiguration& pluginConfig, std::string nameApp)
     : factory(nullptr)
-    , name_app(nameApp)
-    , cppfile("")
+    , cfg(pluginConfig)
 {
-    faust_includedir = SysCall::execCommand("faust --includedir");
-    faust_dspdir = SysCall::execCommand("faust --dspdir");
 
-    normalizePath(faust_includedir);
-    normalizePath(faust_dspdir);
+    cfg.path.wwiseRoot = SysCall::getEnvVar("WWISEROOT");
+    cfg.path.exportPath = cfg.path.wwiseRoot + '/' + std::string(STORAGE_DIRNAME);
+    normalizePath(cfg.path.exportPath);
+    if (!std::filesystem::exists(cfg.path.exportPath)) {
+        std::filesystem::create_directory(cfg.path.exportPath);
+    }
 
-    archfile = faust_dspdir + "/wwise.cpp";
+    cfg.name_app = nameApp;
+    cfg.path.cppfile = "";
+
+    cfg.path.faust_includedir = SysCall::execCommand("faust --includedir");
+    cfg.path.faust_dspdir = SysCall::execCommand("faust --dspdir");
+
+    normalizePath(cfg.path.faust_includedir);
+    normalizePath(cfg.path.faust_dspdir);
+
+    cfg.path.archfile = cfg.path.faust_dspdir + "/wwise.cpp";
     // TODO: store in a file maybe?
 }
 
-void FaustInterpreterWrapper::set_exportPath(const std::string& path)
-{
-    exportPath = path;
-    normalizePath(exportPath);
-}
+// void InterpreterWrapper::set_exportPath(const std::string& path)
+// {
+//     cfg.path.exportPath = path;
+// }
 
-FaustInterpreterWrapper::~FaustInterpreterWrapper()
+InterpreterWrapper::~InterpreterWrapper()
 {
     if (factory)
     {
@@ -37,12 +48,12 @@ FaustInterpreterWrapper::~FaustInterpreterWrapper()
     }
 }
 
-std::string FaustInterpreterWrapper::get_default_entry_code()
+std::string InterpreterWrapper::get_default_entry_code()
 {
     return default_entry_code;
 }
 
-bool FaustInterpreterWrapper::compileDSP(const std::string& dspCode)
+bool InterpreterWrapper::compileDSP(const std::string& dspCode)
 {
 
     // directly create a new dsp factory to exploit its caching ability 
@@ -52,9 +63,9 @@ bool FaustInterpreterWrapper::compileDSP(const std::string& dspCode)
     // int argc = 0;
     // const char** argv = nullptr;
     const char* argv[] = { 
-        "-a", archfile.c_str(),
-        "-I", faust_includedir.c_str(), 
-        "-I", faust_dspdir.c_str(),
+        "-a", cfg.path.archfile.c_str(),
+        "-I", cfg.path.faust_includedir.c_str(), 
+        "-I", cfg.path.faust_dspdir.c_str(),
         "-lang", "cpp", 
         "-json"
     };
@@ -62,7 +73,7 @@ bool FaustInterpreterWrapper::compileDSP(const std::string& dspCode)
 
     std::string errorMessage;
     interpreter_dsp_factory* newFactory = createInterpreterDSPFactoryFromString(
-        name_app,
+        cfg.name_app,
         dspCode,
         argc,
         argv,
@@ -87,42 +98,50 @@ bool FaustInterpreterWrapper::compileDSP(const std::string& dspCode)
     return true;
 }
 
-bool FaustInterpreterWrapper::exportCPP() {
+bool InterpreterWrapper::exportCPP() {
     
-    tempDir = createTempDir();
-    cppfile = tempDir.string() + '/' + name_app + ".cpp";
+    cfg.path.tempDir = createTempDir();
+    cfg.path.cppfile = cfg.path.tempDir + '/' + cfg.name_app + ".cpp";
 
     if (!factory) {
         std::cerr << "No compiled DSP factory available for export." << std::endl;
         return false;
     }
 
-    if (!writeInterpreterDSPFactoryToBitcodeFile(factory, cppfile)) {
-        std::cerr << "Failed to write DSP bytecode to file: " << cppfile << std::endl;
+    if (!writeInterpreterDSPFactoryToBitcodeFile(factory, cfg.path.cppfile)) {
+        std::cerr << "Failed to write DSP bytecode to file: " << cfg.path.cppfile << std::endl;
         return false;
     }
-
-    // move the json file 
-    moveFile(name_app+".json", tempDir.string() + '/' + name_app + ".json");
 
     return true;
 }
 
-bool FaustInterpreterWrapper::compileCPP()
+bool InterpreterWrapper::exportJSON()
+{
+    // move the json file 
+    std::string json_dest = cfg.path.tempDir + '/' + cfg.name_app + ".json";
+    bool jsonMoved = moveFile(cfg.name_app+".json", json_dest);
+    if (!jsonMoved){
+        cfg.path.json_file = cfg.name_app+".json"; // in the cwd
+        return false;
+    }
+    cfg.path.json_file = json_dest;
+    return true;
+}
+
+bool InterpreterWrapper::compileCPP()
 {
     // @TODO integration dependent path --> will be installed in smth like : faust/architecture/wwise/interpreter/CMakeLists.txt
     std::filesystem::path currFile = __FILE__;  // CMakeLists.txt is located in the same dir
     std::string cmakelists_dir = currFile.parent_path().string(); // dir where the CMakeLists.txt is located
     std::string cmd = 
-        "cmake -B \"" + tempDir.string() + "\" "
+        "cmake -B \"" + cfg.path.tempDir + "\" "
         "-S \"" + cmakelists_dir + "\" "
-        "-DFAUST_INCLUDE_DIR=\"" + faust_includedir + "\" "
-        "-DFAUST_LIBRARY=\"" + faust_dspdir + "\" "
-        "-DPROJECT_NAME=" + name_app + " "
-        "-DFAUST_CPP_FILE=\"" + cppfile + "\" "
-        "&& cmake --build \"" + tempDir.string() + "\" --config Release";
-
-    std::cout << "Running: " << cmd << std::endl;
+        "-DFAUST_INCLUDE_DIR=\"" + cfg.path.faust_includedir + "\" "
+        "-DFAUST_LIBRARY=\"" + cfg.path.faust_dspdir + "\" "
+        "-DPROJECT_NAME=" + cfg.name_app + " "
+        "-DFAUST_CPP_FILE=\"" + cfg.path.cppfile + "\" "
+        "&& cmake --build \"" + cfg.path.tempDir + "\" --config "+ cfg.path.config;
 
     int result = std::system(cmd.c_str());
     if(result != 0)
@@ -131,11 +150,13 @@ bool FaustInterpreterWrapper::compileCPP()
         std::cerr << "Build command failed with code " << result << std::endl;
         return false;
     }
-    std::cout << "Build succeeded!" << std::endl;
+
+    cfg.path.dllPath = cfg.path.tempDir + "/"+ cfg.path.config +"/" + cfg.name_app + ".dll";
+    
     return true;
 }
 
-bool FaustInterpreterWrapper::moveFile(const std::string& sourcePath, const std::string& destPath)
+bool InterpreterWrapper::moveFile(const std::string& sourcePath, const std::string& destPath)
 {
     try {
         std::filesystem::path src(sourcePath);
@@ -162,12 +183,12 @@ bool FaustInterpreterWrapper::moveFile(const std::string& sourcePath, const std:
 #include <iomanip>
 #include <sstream>
 
-bool FaustInterpreterWrapper::buildPlugin(const std::string& dspCode) {
+bool InterpreterWrapper::buildPlugin(const std::string& dspCode) {
 
-    auto tempDir = createTempDir();
+    cfg.path.tempDir = createTempDir();
 
     // write dspCode into the example.dsp file. Name of plugin will be set automatically via declare.
-    std::filesystem::path dspPath = tempDir / "example.dsp";
+    std::filesystem::path dspPath = std::filesystem::path(cfg.path.tempDir + "/example.dsp");
     std::ofstream outFile(dspPath);
     if (!outFile.is_open()) {
         return false;
@@ -177,7 +198,7 @@ bool FaustInterpreterWrapper::buildPlugin(const std::string& dspCode) {
 
     // call faust2wwise inside the temp directory
     std::ostringstream cmd;
-    cmd << "cd /d \"" << tempDir.string() << "\" && faust2wwise example.dsp > output.log 2>&1";
+    cmd << "cd /d \"" << cfg.path.tempDir << "\" && faust2wwise example.dsp > output.log 2>&1";
 
     int result = std::system(cmd.str().c_str());
 
@@ -185,20 +206,20 @@ bool FaustInterpreterWrapper::buildPlugin(const std::string& dspCode) {
 }
 
 // TODO: discard timestamp, and use the plugin name for the new directory.
-std::filesystem::path FaustInterpreterWrapper::createTempDir()
+std::string InterpreterWrapper::createTempDir()
 {
     std::ostringstream timestamp;
     auto now = std::chrono::system_clock::now();
     auto now_time_t = std::chrono::system_clock::to_time_t(now);
     timestamp << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
 
-    std::filesystem::path tempDir = std::filesystem::path( exportPath + "/faust_" + timestamp.str());
+    std::filesystem::path tempDirectory = std::filesystem::path( cfg.path.exportPath + "/faust_" + timestamp.str());
 
     try {
-        std::filesystem::create_directories(tempDir);
+        std::filesystem::create_directories(tempDirectory);
     } catch (const std::filesystem::filesystem_error& e) {
         // handle failure to create directory
         return false;
     }
-    return tempDir;
+    return tempDirectory.string();
 }
