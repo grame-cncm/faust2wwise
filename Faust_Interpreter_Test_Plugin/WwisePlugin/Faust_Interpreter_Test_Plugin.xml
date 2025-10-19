@@ -39,7 +39,7 @@ for the documentation about the plugin xml format
       <!-- Add your property definitions here -->
       <Property Name="Duration" Type="Real32" SupportRTPCType="Exclusive" DisplayName="Duration">
         <UserInterface Step="0.1" Fine="0.001" Decimals="3" UIMax="10" />
-        <DefaultValue>0.0</DefaultValue>
+        <DefaultValue>10.0</DefaultValue>
         <AudioEnginePropertyID>0</AudioEnginePropertyID>
         <Restrictions>
           <ValueRestriction>

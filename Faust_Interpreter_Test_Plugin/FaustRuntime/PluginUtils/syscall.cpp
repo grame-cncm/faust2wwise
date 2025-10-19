@@ -1,11 +1,18 @@
 #include "syscall.h"
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <array>
+#include <cstdio>
+#include <cstdlib>
 
 namespace SysCall{
+    
     /* IMPORTANT : These functions require running Wwise as administrator to run successfully. */
 
-    const char* getEnvVar(const std::string& varName) {
+    std::string getEnvVar(const std::string& varName) {
         const char* value = std::getenv(varName.c_str());
-        return value ? value : "";  // return empty string if not found
+        return value ? std::string(value) : "";  // return empty string if not found
     }
 
     std::string execCommand(const std::string& cmd) {

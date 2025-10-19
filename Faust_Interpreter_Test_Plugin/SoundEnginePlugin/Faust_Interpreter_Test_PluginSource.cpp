@@ -46,10 +46,73 @@ Faust_Interpreter_Test_PluginSource::Faust_Interpreter_Test_PluginSource()
     , m_pAllocator(nullptr)
     , m_pContext(nullptr)
 {
+
 }
 
 Faust_Interpreter_Test_PluginSource::~Faust_Interpreter_Test_PluginSource()
 {
+}
+
+AkUInt32 Faust_Interpreter_Test_PluginSource::GetSpeakerConfigChannelMask(int preAllocatedOutputs){
+    
+    // provide default configurations based on given faust dsp outputs
+
+    AkUInt32 in_uChannelMask;
+    switch (preAllocatedOutputs)
+    {
+    case 1:
+        in_uChannelMask = AK_SPEAKER_SETUP_MONO;
+        break;
+    case 2:
+        in_uChannelMask = AK_SPEAKER_SETUP_STEREO;
+        break;
+    case 3:
+        in_uChannelMask = AK_SPEAKER_SETUP_3STEREO;
+        break;
+    case 4:
+        in_uChannelMask = AK_SPEAKER_SETUP_4;
+        break;
+    case 5:
+        in_uChannelMask = AK_SPEAKER_SETUP_5;
+        break;
+    case 6:
+        in_uChannelMask = AK_SPEAKER_SETUP_6;
+        break;
+    case 7:
+        in_uChannelMask = AK_SPEAKER_SETUP_7;
+        break;
+    case 8:
+        in_uChannelMask = AK_SPEAKER_SETUP_7POINT1;
+        break;
+    case 9:
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_9;
+        break;
+    case 10:
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_9POINT1;
+        break;
+    case 11:
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_10POINT1;
+        break;
+    case 12:
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_11POINT1;
+        break;
+    case 13:
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_13_751;
+        break;
+    case 14:
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_13POINT1_751;
+        break;
+    default:
+        in_uChannelMask = AK_SPEAKER_SETUP_STEREO;
+        break;
+    }
+    if (preAllocatedOutputs > 14)
+    {
+        AKPLATFORM::OutputDebugMsg(" [WARNING] dsp_outputs > 14. This is an unsupported speaker configuration. Falling back to 14 channels (AK_SPEAKER_SETUP_AURO_13POINT1_751).\n");
+        in_uChannelMask = AK_SPEAKER_SETUP_AURO_13POINT1_751;
+    }
+
+    return in_uChannelMask;
 }
 
 AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAllocator, AK::IAkSourcePluginContext* in_pContext, AK::IAkPluginParam* in_pParams, AkAudioFormat& in_rFormat)
@@ -59,6 +122,16 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAl
     m_pContext = in_pContext;
 
     m_durationHandler.Setup(m_pParams->RTPC.fDuration, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
+
+    // Set the speaker configuration (using MAX_POSSIBLE_SPEAKERS = 14)
+    GetSpeakerConfigChannelMask(speakersAvail);
+
+    WwiseOutputs.resize(speakersAvail, nullptr); // TODO optimize numChannels latter..
+
+    pluginLoader.setupAudio(
+        static_cast<int>(in_rFormat.uSampleRate),
+        &channelsRequested
+    );
 
     return AK_Success;
 }
@@ -71,6 +144,7 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Term(AK::IAkPluginMemAlloc* in_pAl
 
 AKRESULT Faust_Interpreter_Test_PluginSource::Reset()
 {
+    speakersAvail = static_cast<int>(MAX_POSSIBLE_SPEAKERS);
     return AK_Success;
 }
 
@@ -82,37 +156,48 @@ AKRESULT Faust_Interpreter_Test_PluginSource::GetPluginInfo(AkPluginInfo& out_rP
     return AK_Success;
 }
 
+void Faust_Interpreter_Test_PluginSource::initializeAllChannelsWithSilence(const AkUInt32 framesToProcess)
+{
+        // Runs only once filling the rest of the faust output channels with silence,  ...
+    // ... and only in case the channels requested by the faust dsp program is greater 
+    // than the available channels wwise can support.
+
+    static std::vector<AkReal32> silenceBuffer;
+    if (silenceBuffer.size() < framesToProcess) {
+        silenceBuffer.resize(framesToProcess, 0.0f);
+    
+        // Fill silent channels
+        if (!WwiseOutputs[speakersAvail-1]) // if the last buffer is nullptr
+        {
+            for (AkUInt32 ch = 0; ch < speakersAvail; ++ch) {
+                WwiseOutputs[ch] = silenceBuffer.data();
+            }
+            AKPLATFORM::OutputDebugMsg("Filled the silence buffer!\n");
+        }
+        speakersAvail = channelsRequested;
+    }
+}
+
 void Faust_Interpreter_Test_PluginSource::Execute(AkAudioBuffer* out_pBuffer)
 {
     m_durationHandler.SetDuration(m_pParams->RTPC.fDuration);
     m_durationHandler.ProduceBuffer(out_pBuffer);
 
     const AkUInt32 uNumChannels = out_pBuffer->NumChannels();
+    const AkUInt32 framesToProcess = out_pBuffer->uValidFrames;
 
-    AkUInt16 uFramesProduced;
-    for (AkUInt32 i = 0; i < uNumChannels; ++i)
+    initializeAllChannelsWithSilence(framesToProcess);
+    
+    for (AkUInt32 i = 0; i < speakersAvail; ++i)
     {
-        AkReal32* AK_RESTRICT pBuf = (AkReal32* AK_RESTRICT)out_pBuffer->GetChannel(i);
-
-        uFramesProduced = 0;
-        while (uFramesProduced < out_pBuffer->uValidFrames)
-        {
-            // Generate output here
-            *pBuf++ = 0.0f;
-            ++uFramesProduced;
-        }
+        WwiseOutputs[i] = (AkReal32* AK_RESTRICT) out_pBuffer->GetChannel(i);
     }
 
-    DLLState dllstate = myFaustPlugin.getPluginState();
-    if (dllstate == DLL_COMPILED) // @TODO change to DLL_LINKED after implementing the linking stage.
-    {
-        AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is compiled!");
-    }
-    else if (dllstate == LINKED)
+    if ( pluginLoader.getPluginState() == PluginState::READY)
     {
         AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is linked!");
+        pluginLoader.callback(WwiseOutputs, framesToProcess);
     }
-
 }
 
 AkReal32 Faust_Interpreter_Test_PluginSource::GetDuration() const
