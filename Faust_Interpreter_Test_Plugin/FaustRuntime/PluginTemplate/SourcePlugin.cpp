@@ -1,5 +1,11 @@
 #include "SourcePlugin.h"
 
+WwiseSourcePlugin::WwiseSourcePlugin(std::vector<Parameter> &params)
+    : AbstractPlugin(params)
+{
+
+}
+
 // WwiseSourcePlugin::~WwiseSourcePlugin()
 // {
 

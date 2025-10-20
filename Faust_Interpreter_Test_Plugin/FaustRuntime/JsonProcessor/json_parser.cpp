@@ -2,13 +2,14 @@
 #include "json_parser.h"
 #include "../PluginUtils/plugin_utils.h"
 
-#include<iostream>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <filesystem>
 #include <regex>
+#include <unordered_set>
 
-bool process_json_configuration(PluginConfiguration& cfg) {
+bool process_json_configuration(PluginConfiguration& cfg, std::vector<Parameter> &parameters) {
     
     // Parsing json configuration file..
     try {
@@ -77,6 +78,9 @@ bool process_json_configuration(PluginConfiguration& cfg) {
             }
         }
 
+        // extract ui parameters
+        extract_parameters(json_data["ui"], parameters);
+
         std::cout << "OK: " << cfg.path.json_file << " was parsed successfully!" << std::endl;
 
     } catch (const nlohmann::json::parse_error& e) {
@@ -87,4 +91,49 @@ bool process_json_configuration(PluginConfiguration& cfg) {
         return false;
     }
     return true;
+}
+
+void extract_parameters(const nlohmann::json &parameter_list, std::vector<Parameter> &parameters)
+{
+    // for filtering out entities such as vgroup or hgroup
+    static const std::unordered_set<std::string> param_types = {
+        "hslider", "vslider", "nentry", "checkbox", "button", "hbargraph", "vbargraph"};
+
+    for (const auto& item : parameter_list) {
+
+        // recurse for nested parameters...
+        if (item.contains("items") && item["items"].is_array()) {
+            const nlohmann::json& child_items = item["items"];
+            extract_parameters(child_items, parameters);
+        }
+
+        if (item.contains("type") && param_types.count(item["type"])) {
+            Parameter param;
+            param.type = item.value("type", "");
+            param.label = item.value("label", "");
+            param.varname = item.value("varname", "");
+            param.address = item.value("address", "");
+            param.init = item.value("init", 0.0);
+            param.min = item.value("min", 0.0);
+            param.max = item.value("max", 1.0);
+            param.step = item.value("step", 0.01);
+            if (item.contains("meta"))
+                parse_param_metadata(param.meta, item["meta"]);
+            parameters.push_back(std::move(param));
+        }
+    }
+}
+
+void parse_param_metadata(param_meta_items& meta, const nlohmann::json& meta_items)
+{
+    for (const auto& meta_item : meta_items) {
+        if (meta_item.is_object()) {
+            for (auto it = meta_item.begin(); it != meta_item.end(); ++it) {
+                meta.emplace_back(
+                    it.key(),
+                    it.value().is_string() ? it.value().get<std::string>() : it.value().dump()
+                );
+            }
+        }
+    }
 }

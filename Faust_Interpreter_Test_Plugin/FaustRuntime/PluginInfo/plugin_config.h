@@ -5,7 +5,7 @@
 
 struct PluginConfiguration {
     
-    std::string name_app;
+    std::string name_app = "Faust2WwisePlugin";
     
     struct Paths {
         std::string wwiseRoot;
@@ -34,7 +34,7 @@ struct PluginConfiguration {
 
     void reset()
     {
-        name_app=""; 
+        name_app="Faust2WwisePlugin"; 
         path.tempDir="";
         path.cppfile="";
         path.dllPath=""; 

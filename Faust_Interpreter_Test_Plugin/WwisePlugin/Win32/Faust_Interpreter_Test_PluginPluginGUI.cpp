@@ -191,6 +191,9 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
 
         // build plugin dll asynchronously
         std::thread([this]() {
+                
+                // reset everything before proceeding 
+                faustPluginLoader.unloadPlugin();
 
                 faustPluginLoader.setPluginState(PluginState::PENDING_COMPILATION);
                 
@@ -223,7 +226,18 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                 }
                 faustPluginLoader.setPluginState(PluginState::DLL_COMPILED);
                 
-                faustPluginLoader.initPlugin();
+                bool pluginInitialized = faustPluginLoader.initPlugin();
+                if (!pluginInitialized)
+                {    
+                    return;
+                }
+
+                const std::vector<Parameter> &parameters = faustPluginLoader.getParameters();
+                
+                // verify that params are obtained...
+                char buffer[128];
+                snprintf(buffer, sizeof(buffer), "Parameters size: %zu\n", parameters.size());
+                AKPLATFORM::OutputDebugMsg(buffer);
 
                 // preview not supported yet
                 ShowPopupWindow();

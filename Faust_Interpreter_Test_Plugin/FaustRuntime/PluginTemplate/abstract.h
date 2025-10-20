@@ -3,15 +3,17 @@
 
 #include "PluginInfo/plugin_config.h"
 #include "PluginUtils/runtime_link.h"
+#include "parameter.h"
 #include <faust/dsp/dsp.h>
 #include <faust/gui/MapUI.h>
 #include <faust/gui/meta.h>
-#include <vector>
 
 typedef uint32_t AkUInt32;
 
 class AbstractPlugin{
 public:
+
+    AbstractPlugin(std::vector<Parameter>&);
 
     virtual ~AbstractPlugin();
     
@@ -41,6 +43,9 @@ private:
 
     dsp* (*getDSP_)() = nullptr;
     MapUI* (*getMapUI_)() = nullptr;
+
+    std::vector<Parameter>& parameters;
+
 };
 
 #endif

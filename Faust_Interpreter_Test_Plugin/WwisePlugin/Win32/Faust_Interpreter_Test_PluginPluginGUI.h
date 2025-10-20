@@ -60,9 +60,8 @@ public:
         LRESULT& out_lResult) override;
 
 private:
-    std::wstring dspCode;
+
     HWND faustWnd,editorWnd;
-    
     WM_STATE state;
     
     bool SetCodeEditorText(); 
@@ -82,5 +81,6 @@ private:
     InterpreterWrapper faustInterpreter;
 
     std::wstring entry_code;
+    std::wstring dspCode;
     std::wstring codePath;
 };

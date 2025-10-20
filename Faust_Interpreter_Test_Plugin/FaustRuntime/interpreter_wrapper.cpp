@@ -9,7 +9,7 @@ static inline void normalizePath(std::string& path) {
     std::replace(path.begin(), path.end(), '\\', '/');
 }
 
-InterpreterWrapper::InterpreterWrapper(PluginConfiguration& pluginConfig, std::string nameApp)
+InterpreterWrapper::InterpreterWrapper(PluginConfiguration& pluginConfig)
     : factory(nullptr)
     , cfg(pluginConfig)
 {
@@ -20,9 +20,6 @@ InterpreterWrapper::InterpreterWrapper(PluginConfiguration& pluginConfig, std::s
     if (!std::filesystem::exists(cfg.path.exportPath)) {
         std::filesystem::create_directory(cfg.path.exportPath);
     }
-
-    cfg.name_app = nameApp;
-    cfg.path.cppfile = "";
 
     cfg.path.faust_includedir = SysCall::execCommand("faust --includedir");
     cfg.path.faust_dspdir = SysCall::execCommand("faust --dspdir");

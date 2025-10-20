@@ -1,5 +1,11 @@
 #include "abstract.h"
 
+AbstractPlugin::AbstractPlugin(std::vector<Parameter>& params)
+    : parameters(params)
+{
+
+}
+
 AbstractPlugin::~AbstractPlugin(){
     reset();
 }
@@ -40,4 +46,7 @@ void AbstractPlugin::reset()
     m_dsp_ = nullptr;
     map_ui_ = nullptr;
     cfg = nullptr;
+
+    parameters.clear();
+
 }
