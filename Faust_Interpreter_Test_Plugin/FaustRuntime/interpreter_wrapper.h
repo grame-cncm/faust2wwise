@@ -10,7 +10,7 @@
 class InterpreterWrapper {
 
 public:
-    InterpreterWrapper(PluginConfiguration&, std::string nameApp="MY_DSP"); // receives the temp dir to export stuff..
+    InterpreterWrapper(PluginConfiguration&); // receives the temp dir to export stuff..
     ~InterpreterWrapper();
 
     std::string getExportPath( ) { return cfg.path.exportPath; }

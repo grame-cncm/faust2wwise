@@ -3,6 +3,8 @@
 PluginLoader::PluginLoader()
     : pluginState(PluginState::ZERO_STATE)
     , dspLib(nullptr)
+    , effectPlugin(parameters)
+    , sourcePlugin(parameters)
 {
 
 }
@@ -48,14 +50,14 @@ bool PluginLoader::initPlugin()
     pluginState.store(PluginState::DLL_LINKED);
 
     // load json
-    bool jsonParsed = process_json_configuration(cfg);
+    bool jsonParsed = process_json_configuration(cfg, parameters);
     if (!jsonParsed)
     {
         pluginState.store(PluginState::ERR_JSON_PARSE);
         return false;
     }
     pluginState.store(PluginState::JSON_PARSED);
-        
+
     // set plugin
     if (cfg.plugin_type == "source")
     {
@@ -91,13 +93,14 @@ void PluginLoader::unloadPlugin()
     }
 
     // reset plugin
-    plugin->reset();
-
-    // reset config
-    cfg.reset();
+    if (plugin)
+       plugin->reset();
 
     // unload plugin
     plugin = nullptr;
+
+    // reset config
+    cfg.reset();
 
     // unload library
     if (dspLib){
@@ -120,4 +123,10 @@ PluginState PluginLoader::getPluginState()
 void PluginLoader::callback(std::vector<FAUSTFLOAT*>& data, const AkUInt32 size)
 {
     plugin->callback(data, size);
+}
+
+
+std::vector<Parameter>& PluginLoader::getParameters()
+{    
+    return parameters;  
 }

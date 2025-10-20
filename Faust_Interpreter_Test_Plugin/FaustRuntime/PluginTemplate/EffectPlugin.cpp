@@ -1,5 +1,11 @@
 #include "EffectPlugin.h"
 
+WwiseEffectPlugin::WwiseEffectPlugin(std::vector<Parameter> &params)
+    : AbstractPlugin(params)
+{
+
+}
+
 WwiseEffectPlugin::~WwiseEffectPlugin()
 {
 

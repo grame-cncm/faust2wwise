@@ -39,7 +39,9 @@ public:
     bool initPlugin();
     void unloadPlugin();
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
-
+    
+    std::vector<Parameter>& getParameters();
+    
 private:
     /*! @brief Class constructor.
     */
@@ -56,6 +58,8 @@ private:
     // preallocate
     WwiseEffectPlugin effectPlugin;
     WwiseSourcePlugin sourcePlugin;
+
+    std::vector<Parameter> parameters;
 };
 
 #endif
