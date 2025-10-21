@@ -13,7 +13,7 @@ typedef uint32_t AkUInt32;
 class AbstractPlugin{
 public:
 
-    AbstractPlugin(std::vector<Parameter>&);
+    AbstractPlugin(ParameterList&);
 
     virtual ~AbstractPlugin();
     
@@ -39,12 +39,12 @@ protected:
 
     std::vector<FAUSTFLOAT*> faust_outputs;
 
+    ParameterList& parameters;
+
 private:
 
     dsp* (*getDSP_)() = nullptr;
     MapUI* (*getMapUI_)() = nullptr;
-
-    std::vector<Parameter>& parameters;
 
 };
 
