@@ -1,6 +1,6 @@
 
 #include "json_parser.h"
-#include "../PluginUtils/plugin_utils.h"
+#include "PluginUtils/plugin_utils.h"
 
 #include <iostream>
 #include <fstream>
@@ -9,7 +9,7 @@
 #include <regex>
 #include <unordered_set>
 
-bool process_json_configuration(PluginConfiguration& cfg, std::vector<Parameter> &parameters) {
+bool process_json_configuration(PluginConfiguration& cfg, ParameterList &parameters) {
     
     // Parsing json configuration file..
     try {
@@ -93,13 +93,13 @@ bool process_json_configuration(PluginConfiguration& cfg, std::vector<Parameter>
     return true;
 }
 
-void extract_parameters(const nlohmann::json &parameter_list, std::vector<Parameter> &parameters)
+void extract_parameters(const nlohmann::json &parameterJsonlist, ParameterList &parameters)
 {
     // for filtering out entities such as vgroup or hgroup
     static const std::unordered_set<std::string> param_types = {
         "hslider", "vslider", "nentry", "checkbox", "button", "hbargraph", "vbargraph"};
 
-    for (const auto& item : parameter_list) {
+    for (const auto& item : parameterJsonlist) {
 
         // recurse for nested parameters...
         if (item.contains("items") && item["items"].is_array()) {
@@ -108,18 +108,19 @@ void extract_parameters(const nlohmann::json &parameter_list, std::vector<Parame
         }
 
         if (item.contains("type") && param_types.count(item["type"])) {
+            // auto param = std::make_unique<Parameter>();
             Parameter param;
             param.type = item.value("type", "");
             param.label = item.value("label", "");
             param.varname = item.value("varname", "");
+            param.shortname = item.value("shortname", "");
             param.address = item.value("address", "");
-            param.init = item.value("init", 0.0);
-            param.min = item.value("min", 0.0);
-            param.max = item.value("max", 1.0);
+            param.pmin = item.value("min", 0.0);
+            param.pmax = item.value("max", 1.0);
             param.step = item.value("step", 0.01);
             if (item.contains("meta"))
                 parse_param_metadata(param.meta, item["meta"]);
-            parameters.push_back(std::move(param));
+            parameters.emplace_back(std::move(param));
         }
     }
 }

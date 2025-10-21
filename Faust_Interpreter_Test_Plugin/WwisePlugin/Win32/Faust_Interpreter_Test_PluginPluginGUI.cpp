@@ -232,11 +232,11 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                     return;
                 }
 
-                const std::vector<Parameter> &parameters = faustPluginLoader.getParameters();
-                
+                ParameterList &parameters = faustPluginLoader.getParameters();
+               
                 // verify that params are obtained...
-                char buffer[128];
-                snprintf(buffer, sizeof(buffer), "Parameters size: %zu\n", parameters.size());
+                char buffer[512];
+                snprintf(buffer, sizeof(buffer), "Parameters size: %zu and the first one is label %s , name %s \n", parameters.size(), parameters[0].label.c_str(), parameters[0].varname.c_str());
                 AKPLATFORM::OutputDebugMsg(buffer);
 
                 // preview not supported yet

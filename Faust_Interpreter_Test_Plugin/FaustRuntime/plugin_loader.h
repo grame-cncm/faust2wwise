@@ -7,8 +7,6 @@
 #include "PluginTemplate/SourcePlugin.h"
 #include "PluginTemplate/EffectPlugin.h"
 
-#include <atomic>
-
 /*!
  * @brief Singleton class.
 */
@@ -40,7 +38,7 @@ public:
     void unloadPlugin();
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     
-    std::vector<Parameter>& getParameters();
+    ParameterList& getParameters();
     
 private:
     /*! @brief Class constructor.
@@ -59,7 +57,7 @@ private:
     WwiseEffectPlugin effectPlugin;
     WwiseSourcePlugin sourcePlugin;
 
-    std::vector<Parameter> parameters;
+    ParameterList parameters;
 };
 
 #endif

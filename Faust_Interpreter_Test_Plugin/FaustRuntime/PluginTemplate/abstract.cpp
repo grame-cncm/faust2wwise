@@ -1,6 +1,6 @@
 #include "abstract.h"
 
-AbstractPlugin::AbstractPlugin(std::vector<Parameter>& params)
+AbstractPlugin::AbstractPlugin(ParameterList& params)
     : parameters(params)
 {
 

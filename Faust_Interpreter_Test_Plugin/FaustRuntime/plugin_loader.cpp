@@ -126,7 +126,7 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& data, const AkUInt32 size)
 }
 
 
-std::vector<Parameter>& PluginLoader::getParameters()
+ParameterList& PluginLoader::getParameters()
 {    
     return parameters;  
 }
