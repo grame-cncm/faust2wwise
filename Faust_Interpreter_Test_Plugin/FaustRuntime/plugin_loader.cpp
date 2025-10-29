@@ -1,11 +1,23 @@
 #include "plugin_loader.h"
 
+#include <iostream>
+
 PluginLoader::PluginLoader()
     : pluginState(PluginState::ZERO_STATE)
-    , dspLib(nullptr)
-    , effectPlugin(parameters)
-    , sourcePlugin(parameters)
+    , effectPlugin(cfg, parameters, faustInterpreter)
+    , sourcePlugin(cfg, parameters, faustInterpreter)
 {
+    cfg.path.wwiseRoot = SysCall::getEnvVar("WWISEROOT");
+    cfg.path.exportPath = cfg.path.wwiseRoot + '/' + std::string(STORAGE_DIRNAME);
+
+    if (!std::filesystem::exists(cfg.path.exportPath)) {
+        std::filesystem::create_directory(cfg.path.exportPath);
+    }
+
+    cfg.path.faust_includedir = SysCall::execCommand("faust --includedir");
+    cfg.path.faust_dspdir = SysCall::execCommand("faust --dspdir");
+
+    cfg.path.archfile = cfg.path.faust_dspdir + "/wwise.cpp";
 
 }
 
@@ -14,51 +26,39 @@ PluginLoader::~PluginLoader()
     unloadPlugin();
 }
 
-void PluginLoader::setupAudio(int SR, int* channelsRequested)
+bool PluginLoader::createPlugin(std::string &dspCode)
 {
-    cfg.sampleRate = SR;
-    *channelsRequested = cfg.num_outputs;
+    
+    // reset everything before proceeding 
+    unloadPlugin();
 
-    plugin->setup(cfg);
-    pluginState.store(PluginState::READY);
-}
-
-bool PluginLoader::loadDynamicLib()
-{
-    if (dspLib)
+    pluginState.store(PluginState::PENDING_CREATION);
+    
+    bool dspCompiled = faustInterpreter.compileDSP(dspCode, cfg);
+    if (!dspCompiled)
     {
-        RuntimeLink::unloadDynamicLibrary(dspLib);
-        dspLib = nullptr;
-    }    
-
-    dspLib = RuntimeLink::loadDynamicLibrary(cfg.path.dllPath);
-
-    if (!dspLib)
-        return false;
-    return true;
-}
-
-bool PluginLoader::initPlugin()
-{
-    // load 
-    bool dllLinked = loadDynamicLib();
-    if (!dllLinked)
-    {
-        pluginState.store(PluginState::ERR_LINKAGE);
+        pluginState.store(PluginState::ERR_COMPILE_DSP);
         return false;
     }
-    pluginState.store(PluginState::DLL_LINKED);
+    pluginState.store(PluginState::DSP_COMPILED);
 
-    // load json
-    bool jsonParsed = process_json_configuration(cfg, parameters);
-    if (!jsonParsed)
+    bool dspCreated = faustInterpreter.createDSP();
+    if (!dspCreated)
     {
-        pluginState.store(PluginState::ERR_JSON_PARSE);
+        pluginState.store(PluginState::ERR_DSP_CREATION);
         return false;
     }
-    pluginState.store(PluginState::JSON_PARSED);
+    pluginState.store(PluginState::DSP_CREATED);
 
-    // set plugin
+    bool pluginConfigured = faustInterpreter.configurePlugin(cfg, parameters);
+    if (!pluginConfigured)
+    {
+        pluginState.store(PluginState::ERR_CONFIGURE_PLUGIN);
+        return false;
+    }
+    pluginState.store(PluginState::PLUGIN_CONFIGURED);
+
+    // assign plugin pointer to preallocated plugin depending on its type.
     if (cfg.plugin_type == "source")
     {
         plugin = &sourcePlugin;
@@ -67,17 +67,33 @@ bool PluginLoader::initPlugin()
     {
         plugin = &effectPlugin;
     }
-
-    // load symbols
-    bool symbolsLoaded = plugin->loadSymbols(dspLib);
-    if (!symbolsLoaded)
+    pluginState.store(PluginState::DSP_CREATED);
+    
+    bool isSetUp = plugin->setup();
+    if (!isSetUp)
     {
-        pluginState.store(PluginState::ERR_LOAD_SYMBOLS);
+        pluginState.store(PluginState::ERR_SETUP_PLUGIN);
         return false;
     }
-    pluginState.store(PluginState::SYMBOLS_LOADED);  
-    
-    // setupAudio is pending..
+    pluginState.store(PluginState::SETUP_PLUGIN_OK);
+        
+
+    // setupAudio is pending - will be called when the play button is pressed ...
+
+
+    return true;
+}
+
+void PluginLoader::setupAudio(int SR)
+{
+    if (pluginState.load() == PluginState::SETUP_PLUGIN_OK)
+    {
+        faustInterpreter.setupDSP(SR);
+        cfg.sampleRate = SR;
+        // *channelsRequested = cfg.num_outputs; // change channels requested to 
+
+        pluginState.store(PluginState::READY);
+    }
 }
 
 void PluginLoader::unloadPlugin()
@@ -95,29 +111,18 @@ void PluginLoader::unloadPlugin()
     // reset plugin
     if (plugin)
        plugin->reset();
-
+    
     // unload plugin
+    // delete plugin;
     plugin = nullptr;
 
-    // reset config
+    // reset internal
     cfg.reset();
+    faustInterpreter.reset();
 
-    // unload library
-    if (dspLib){
-        RuntimeLink::unloadDynamicLibrary(dspLib);
-        dspLib = nullptr;
-    }
-        
-}
-
-void PluginLoader::setPluginState(PluginState state)
-{
-    pluginState.store(state);
-}
-
-PluginState PluginLoader::getPluginState()
-{
-    return pluginState.load();
+    // reset params
+    parameters.clear();
+    parameters.shrink_to_fit();
 }
 
 void PluginLoader::callback(std::vector<FAUSTFLOAT*>& data, const AkUInt32 size)
@@ -126,7 +131,32 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& data, const AkUInt32 size)
 }
 
 
-ParameterList& PluginLoader::getParameters()
-{    
-    return parameters;  
+// ParameterList& PluginLoader::getParameters()
+// {    
+//     return parameters;  
+// }
+
+#include <fstream>
+#include <cstdlib>
+#include <sstream>
+bool PluginLoader::buildPlugin(const std::string& dspCode) {
+
+    std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath);
+
+    // write dspCode into the example.dsp file. Name of plugin will be set automatically via declare.
+    std::filesystem::path dspPath = std::filesystem::path(tempDir + "/example.dsp");
+    std::ofstream outFile(dspPath);
+    if (!outFile.is_open()) {
+        return false;
+    }
+    outFile << dspCode;
+    outFile.close();
+
+    // call faust2wwise inside the temp directory
+    std::ostringstream cmd;
+    cmd << "cd /d \"" << tempDir << "\" && faust2wwise example.dsp > output.log 2>&1";
+
+    int result = std::system(cmd.str().c_str());
+
+    return result == 0;
 }

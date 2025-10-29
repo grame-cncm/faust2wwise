@@ -13,6 +13,11 @@ namespace PluginUtils{
             - Capitalizing the first character
     */
     std::string ensure_valid_plugin_name(const std::string& name);
+
+    bool moveFile(const std::string&, const std::string&);
+
+    std::string createTempDir(const std::string&);
+    
 }
 
 #endif

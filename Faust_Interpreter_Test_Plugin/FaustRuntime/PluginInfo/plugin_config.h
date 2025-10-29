@@ -1,22 +1,21 @@
 #ifndef PLUGIN_CONFIG_H
 #define PLUGIN_CONFIG_H
 
+#define STORAGE_DIRNAME "_f2wTemp_"
+#define DEFAULT_NAME_APP "Faust2WwisePlugin"
+
 #include <string>
 
 struct PluginConfiguration {
     
-    std::string name_app = "Faust2WwisePlugin";
+    std::string name_app {std::string(DEFAULT_NAME_APP)};
     
     struct Paths {
         std::string wwiseRoot;
+        std::string exportPath;
         std::string faust_includedir;
         std::string faust_dspdir;
-        std::string exportPath;
-        std::string tempDir;
-        std::string cppfile;
         std::string archfile;  
-        std::string dllPath; 
-        std::string json_file;
         std::string config = "Debug"; 
     }path;
     
@@ -34,11 +33,7 @@ struct PluginConfiguration {
 
     void reset()
     {
-        name_app="Faust2WwisePlugin"; 
-        path.tempDir="";
-        path.cppfile="";
-        path.dllPath=""; 
-        path.json_file="";
+        name_app=std::string(DEFAULT_NAME_APP); 
         plugin_type="";
         plugin_name="";
         author="";

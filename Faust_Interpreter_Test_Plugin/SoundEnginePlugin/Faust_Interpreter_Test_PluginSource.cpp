@@ -129,8 +129,8 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAl
     WwiseOutputs.resize(speakersAvail, nullptr); // TODO optimize numChannels latter..
 
     pluginLoader.setupAudio(
-        static_cast<int>(in_rFormat.uSampleRate),
-        &channelsRequested
+        static_cast<int>(in_rFormat.uSampleRate)//,
+        // &channelsRequested
     );
 
     return AK_Success;
@@ -188,14 +188,13 @@ void Faust_Interpreter_Test_PluginSource::Execute(AkAudioBuffer* out_pBuffer)
 
     initializeAllChannelsWithSilence(framesToProcess);
     
-    for (AkUInt32 i = 0; i < speakersAvail; ++i)
-    {
-        WwiseOutputs[i] = (AkReal32* AK_RESTRICT) out_pBuffer->GetChannel(i);
-    }
-
     if ( pluginLoader.getPluginState() == PluginState::READY)
     {
-        AKPLATFORM::OutputDebugMsg("Execute function can see that the dll is linked!");
+        for (AkUInt32 i = 0; i < speakersAvail; ++i)
+        {
+            WwiseOutputs[i] = (AkReal32* AK_RESTRICT) out_pBuffer->GetChannel(i);
+        }
+        AKPLATFORM::OutputDebugMsg("Execute function is running!");
         pluginLoader.callback(WwiseOutputs, framesToProcess);
     }
 }

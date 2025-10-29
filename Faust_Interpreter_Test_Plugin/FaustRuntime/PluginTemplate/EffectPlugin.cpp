@@ -1,7 +1,7 @@
 #include "EffectPlugin.h"
 
-WwiseEffectPlugin::WwiseEffectPlugin(ParameterList &params)
-    : AbstractPlugin(params)
+WwiseEffectPlugin::WwiseEffectPlugin(PluginConfiguration& config, ParameterList& params, InterpreterWrapper& interpreter)
+    : AbstractPlugin(config, params, interpreter)
 {
 
 }
@@ -11,10 +11,10 @@ WwiseEffectPlugin::~WwiseEffectPlugin()
 
 }
 
-void WwiseEffectPlugin::setup(PluginConfiguration &config)
+bool WwiseEffectPlugin::setup()
 {
-    AbstractPlugin::setup(config);
-
+    return AbstractPlugin::setup();
+    // ...
 }
 
 void WwiseEffectPlugin::callback(std::vector<FAUSTFLOAT*>& outputs, const AkUInt32 bufferSize)

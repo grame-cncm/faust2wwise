@@ -1,34 +1,34 @@
 #include "SourcePlugin.h"
 
-WwiseSourcePlugin::WwiseSourcePlugin(ParameterList &params)
-    : AbstractPlugin(params)
+WwiseSourcePlugin::WwiseSourcePlugin(PluginConfiguration& config, ParameterList& params, InterpreterWrapper& interpreter)
+    : AbstractPlugin(config, params, interpreter)
 {
 
 }
 
 // WwiseSourcePlugin::~WwiseSourcePlugin()
 // {
-
+// 
 // }
 
-void WwiseSourcePlugin::setup(PluginConfiguration &config)
+bool WwiseSourcePlugin::setup()
 {
-    AbstractPlugin::setup(config);
-    // ..
+    return AbstractPlugin::setup();
+    // ...
 }
 
 void WwiseSourcePlugin::callback(std::vector<FAUSTFLOAT*>& outputs, const AkUInt32 bufferSize)
 {
     // <<FOREACHPARAM:IF io_type==input: setParameter( "${shortname}", m_pParams->${isRTPC}.${RTPCname} );>>
 
-    for (AkUInt32 ch = 0; ch < cfg->num_outputs; ++ch)
+    for (AkUInt32 ch = 0; ch < cfg.num_outputs; ++ch)
     {
         faust_outputs[ch] = outputs[ch];
     }
 
     // fillRestOfBuffersWithSilence(bufferSize);
         
-    m_dsp_->compute(bufferSize, nullptr, faust_outputs.data());
+    faustInterpreter.callback(bufferSize, nullptr, faust_outputs.data());
 
 
 }

@@ -1,18 +1,24 @@
 #include "syscall.h"
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <array>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 
 namespace SysCall{
     
     /* IMPORTANT : These functions require running Wwise as administrator to run successfully. */
 
+    inline std::string normalizePath(const std::string& path) {
+        std::string normalized = path;
+        std::replace(normalized.begin(), normalized.end(), '\\', '/');
+        return normalized;
+    }
+
     std::string getEnvVar(const std::string& varName) {
         const char* value = std::getenv(varName.c_str());
-        return value ? std::string(value) : "";  // return empty string if not found
+        return value ? normalizePath(std::string(value)) : "";  // return empty string if not found
     }
 
     std::string execCommand(const std::string& cmd) {
@@ -30,7 +36,7 @@ namespace SysCall{
             result += buffer.data();
         }
 
-        return result.substr(0, result.size()-1); // erase \n at the end.
+        return normalizePath(result.substr(0, result.size()-1)); // erase \n at the end and normalize path.
     }
 
 }
