@@ -2,49 +2,31 @@
 #define TEMPLATE_PLUGIN_H
 
 #include "PluginInfo/plugin_config.h"
-#include "PluginUtils/runtime_link.h"
-#include "parameter.h"
-#include <faust/dsp/dsp.h>
-#include <faust/gui/MapUI.h>
-#include <faust/gui/meta.h>
+#include "Parameters/parameter.h"
+#include "Interpreter/wrapper.h"
 
 typedef uint32_t AkUInt32;
 
 class AbstractPlugin{
 public:
 
-    AbstractPlugin(ParameterList&);
+    AbstractPlugin(PluginConfiguration&, ParameterList&, InterpreterWrapper&);
 
     virtual ~AbstractPlugin();
     
-    bool loadSymbols(void* dspLib);
-    
-    virtual void setup(PluginConfiguration &config);
-    
-    virtual void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32)=0;
-    
-    virtual void fillRestOfBuffersWithSilence(const AkUInt32)=0;
-
     void reset();
+
+    virtual bool setup();    
+    virtual void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32)=0;
+    virtual void fillRestOfBuffersWithSilence(const AkUInt32)=0;
     
 protected:
 
-    PluginConfiguration* cfg;
-
-    dsp* m_dsp_ = nullptr;
-    MapUI* map_ui_ = nullptr;
-    void (*initDSP_)(int) = nullptr;
-    void (*setParameter_float_)(const char*, float) = nullptr;
-    FAUSTFLOAT (*getParameter_)(const char*) = nullptr;
+    PluginConfiguration& cfg;
+    ParameterList& parameters;
+    InterpreterWrapper& faustInterpreter;
 
     std::vector<FAUSTFLOAT*> faust_outputs;
-
-    ParameterList& parameters;
-
-private:
-
-    dsp* (*getDSP_)() = nullptr;
-    MapUI* (*getMapUI_)() = nullptr;
 
 };
 

@@ -3,9 +3,9 @@
 class WwiseSourcePlugin: public AbstractPlugin
 {
 public:
-    WwiseSourcePlugin(ParameterList&);
+    WwiseSourcePlugin(PluginConfiguration&, ParameterList&, InterpreterWrapper&);
     ~WwiseSourcePlugin() = default;
-    void setup(PluginConfiguration&) override final;
+    bool setup() override final;
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32) override final;
     void fillRestOfBuffersWithSilence(const AkUInt32) override final;
 };

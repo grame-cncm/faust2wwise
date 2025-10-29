@@ -1,52 +1,29 @@
 #include "abstract.h"
 
-AbstractPlugin::AbstractPlugin(ParameterList& params)
-    : parameters(params)
+AbstractPlugin::AbstractPlugin(PluginConfiguration& config, ParameterList& params, InterpreterWrapper& interpreter)
+    : cfg(config)
+    , parameters(params)
+    , faustInterpreter(interpreter)
 {
-
 }
 
 AbstractPlugin::~AbstractPlugin(){
     reset();
 }
 
-void AbstractPlugin::setup(PluginConfiguration &config)
+bool AbstractPlugin::setup()
 {
-    cfg = &config;
+    faust_outputs.resize(cfg.num_outputs);
 
-    faust_outputs.resize(cfg->num_outputs);
-
-    initDSP_(cfg->sampleRate);
-
-}
-
-bool AbstractPlugin::loadSymbols(void* dspLib)
-{
-    // load symbols
-    initDSP_ = reinterpret_cast<void (*)(int)>(RuntimeLink::getSymbol(dspLib, "initDSP"));
-    setParameter_float_ = reinterpret_cast<void (*)(const char*, float)>(RuntimeLink::getSymbol(dspLib,"setParameter"));
-    getParameter_ = reinterpret_cast<FAUSTFLOAT (*)(const char*)>(RuntimeLink::getSymbol(dspLib, "getParameter"));
-    getDSP_ = reinterpret_cast<dsp*(*)()>(RuntimeLink::getSymbol(dspLib, "getDSP"));
-    getMapUI_ = reinterpret_cast<MapUI*(*)()>(RuntimeLink::getSymbol(dspLib, "getMapUI"));
-    m_dsp_ = getDSP_();
-    map_ui_ = getMapUI_();
-    
-    if (!initDSP_ || !setParameter_float_ || !getParameter_ || !getDSP_ || !getMapUI_)
-        return false;
+    // this function always return true. 
+    // But it is a (not pure) virtual, so that means:
+    // children are allowed to return false based on their extended implementation.
+    // @TODO : if childeren have no reason to return false, change signature to void return.
     return true;
 }
 
 void AbstractPlugin::reset()
 {
-    initDSP_ = nullptr;
-    setParameter_float_ = nullptr;
-    getParameter_ = nullptr;
-    getDSP_ = nullptr;
-    getMapUI_ = nullptr;
-    m_dsp_ = nullptr;
-    map_ui_ = nullptr;
-    cfg = nullptr;
-
-    parameters.clear();
+    faust_outputs.clear();
 
 }

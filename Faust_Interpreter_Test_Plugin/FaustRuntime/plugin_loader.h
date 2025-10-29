@@ -1,11 +1,11 @@
 #ifndef FAUST_PLUGIN_LOADER_H
 #define FAUST_PLUGIN_LOADER_H
 
-
-#include "PluginInfo/plugin_state.h"
-#include "JsonProcessor/json_parser.h"
+#include "PluginUtils/syscall.h"
+#include "Interpreter/wrapper.h"
 #include "PluginTemplate/SourcePlugin.h"
 #include "PluginTemplate/EffectPlugin.h"
+#include "PluginInfo/plugin_state.h"
 
 /*!
  * @brief Singleton class.
@@ -28,36 +28,33 @@ public:
     PluginLoader& operator=(PluginLoader&&) = delete; //  delete move assignement operator
 
     PluginConfiguration& getConfiguration() {   return cfg;     }
+    ParameterList& getParameters()          {   return parameters;  }
+    PluginState getPluginState()            {   return pluginState.load();  }
 
-    void setPluginState(PluginState);
-    PluginState getPluginState();
-    
-    void setupAudio(int, int*);
-
-    bool initPlugin();
+    bool createPlugin(std::string&); // TODO copy string?
+    void setupAudio(int); //int*
     void unloadPlugin();
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     
-    ParameterList& getParameters();
-    
+    bool buildPlugin(const std::string&);
+    std::string& getExportPath() {   return cfg.path.exportPath;  }
+
 private:
     /*! @brief Class constructor.
     */
     PluginLoader();
-    bool loadDynamicLib();
 
-    void* dspLib; // temporary pointer to library
+    InterpreterWrapper faustInterpreter;
 
     std::atomic<PluginState> pluginState;
-
     PluginConfiguration cfg;
+    ParameterList parameters;
     
     AbstractPlugin *plugin;
     // preallocate
     WwiseEffectPlugin effectPlugin;
     WwiseSourcePlugin sourcePlugin;
 
-    ParameterList parameters;
 };
 
 #endif

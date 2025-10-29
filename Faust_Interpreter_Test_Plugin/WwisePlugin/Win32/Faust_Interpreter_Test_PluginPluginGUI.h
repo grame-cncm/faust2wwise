@@ -26,7 +26,6 @@ the specific language governing permissions and limitations under the License.
 #pragma once
 
 #include "../Faust_Interpreter_Test_PluginPlugin.h"
-#include "interpreter_wrapper.h"
 #include "plugin_loader.h"
 
 enum WM_STATE{
@@ -78,7 +77,6 @@ private:
     // IMPORTANT : Declare faustPluginLoader before faustInterpreter. Initialization order matters.
     // HINT: PluginLoader is a singleton. It defines the configuration that is shared with the InterpreterWrapper class, which in fact has a member reference to it.
     PluginLoader& faustPluginLoader = PluginLoader::getInstance(); 
-    InterpreterWrapper faustInterpreter;
 
     std::wstring entry_code;
     std::wstring dspCode;

@@ -4,19 +4,17 @@
 enum PluginState{
     ZERO_STATE,
     // IDDLE, // for when loading previously compiled plugins? i.e. when opening wwise?
-    PENDING_COMPILATION,
+    PENDING_CREATION,
     ERR_COMPILE_DSP,
-    ERR_EXPORT_CPP,
-    ERR_EXPORT_JSON,
-    ERR_COMPILE_CPP,
-    DLL_COMPILED,
-    ERR_LINKAGE,
-    DLL_LINKED,
-    ERR_LINKED,
-    ERR_JSON_PARSE,
-    JSON_PARSED,
-    ERR_LOAD_SYMBOLS,
-    SYMBOLS_LOADED,
+    DSP_COMPILED,
+    ERR_DSP_CREATION,
+    DSP_CREATED,
+    PENDING_CONFIGURATION,
+    ERR_CONFIGURE_PLUGIN,
+    PLUGIN_CONFIGURED,
+    ERR_SETUP_PLUGIN,
+    SETUP_PLUGIN_OK,
+    BUILT,
     READY
 };
 

@@ -28,12 +28,14 @@ the specific language governing permissions and limitations under the License.
 #include "../resource.h"
 #include "PluginUtils/syscall.h"
 #include <AK/AkWwiseSDKVersion.h>
+#include "entry_code.h"
 #include <windows.h>
 #include <sstream>
 #include <locale>
 #include <codecvt>
 #include <thread>
 
+// @TODO : Improve the way code in the editor is stored/used
 #define LASTCODE_FNAME "last_code.dsp"
 
 inline std::string wstring2string(const std::wstring wstr)
@@ -56,13 +58,10 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
     , faustWnd(nullptr)
     , editorWnd(nullptr)
     , state(WM_STATE::NONINIT_STATE)
-    , faustInterpreter(faustPluginLoader.getConfiguration())
 {
-    
-    // PluginConfiguration& cfg = faustPluginLoader.getConfiguration();
-    std::string exportPath = faustInterpreter.getExportPath();
+    std::string exportPath = faustPluginLoader.getExportPath();
     codePath = string2wstring(exportPath + "/" + std::string(LASTCODE_FNAME));
-    entry_code = string2wstring(faustInterpreter.get_default_entry_code());
+    entry_code = string2wstring( std::string(default_entry_code));
     
     AKPLATFORM::OutputDebugMsg("Faust :: Constructor got called!\n");
 }
@@ -127,6 +126,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             {
                 if (id == IDC_BUTTON_PREVIEW)
                 {
+                    //@TODO Pass the name of the Plugin  - > create a field for defining the plugin name, or maybe a fileloader just like the online editor.
                     OnPreviewButtonClicked();
                 }
                 if (id == IDC_BUTTON_BUILD)
@@ -139,6 +139,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
         }
         case WM_DESTROY:
         {
+            faustPluginLoader.unloadPlugin();
             AKPLATFORM::OutputDebugMsg("Faust :: WM_DESTROY got called!\n");
             SaveCodeEditorText();
             faustWnd = editorWnd = nullptr;
@@ -158,7 +159,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::SetCodeEditorText()
     if (loadLastSavedCode())
         text = dspCode;
     else{
-        text = string2wstring(faustInterpreter.get_default_entry_code());
+        text = string2wstring(std::string(default_entry_code));
     }
     SetWindowTextW(editorWnd, text.c_str());
     return true;
@@ -192,53 +193,21 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
         // build plugin dll asynchronously
         std::thread([this]() {
                 
-                // reset everything before proceeding 
-                faustPluginLoader.unloadPlugin();
-
-                faustPluginLoader.setPluginState(PluginState::PENDING_COMPILATION);
+                bool pluginCreated = faustPluginLoader.createPlugin(wstring2string(this->dspCode));
                 
-                bool dspCompiled = faustInterpreter.compileDSP(wstring2string(this->dspCode));
-                if (!dspCompiled)
-                {
-                    faustPluginLoader.setPluginState(PluginState::ERR_COMPILE_DSP);   
+                if (!pluginCreated)
                     return;
-                }
-
-                bool exported = faustInterpreter.exportCPP();
-                if (!exported)
-                {
-                    faustPluginLoader.setPluginState(PluginState::ERR_EXPORT_CPP);   
-                    return;
-                }
-                
-                exported = faustInterpreter.exportJSON();
-                if (!exported)
-                {
-                    faustPluginLoader.setPluginState(PluginState::ERR_EXPORT_JSON);   
-                    return;
-                }
-
-                bool compiled = faustInterpreter.compileCPP();
-                if (!compiled)
-                {    
-                    faustPluginLoader.setPluginState(PluginState::ERR_COMPILE_CPP);   
-                    return;
-                }
-                faustPluginLoader.setPluginState(PluginState::DLL_COMPILED);
-                
-                bool pluginInitialized = faustPluginLoader.initPlugin();
-                if (!pluginInitialized)
-                {    
-                    return;
-                }
-
+                    
                 ParameterList &parameters = faustPluginLoader.getParameters();
-               
-                // verify that params are obtained...
-                char buffer[512];
-                snprintf(buffer, sizeof(buffer), "Parameters size: %zu and the first one is label %s , name %s \n", parameters.size(), parameters[0].label.c_str(), parameters[0].varname.c_str());
-                AKPLATFORM::OutputDebugMsg(buffer);
 
+                // // verify that params are obtained...
+                if (!parameters.empty())
+                {
+                    char buffer[512];
+                    snprintf(buffer, sizeof(buffer), "Parameters size: %zu and the first one is label %s , name %s \n", parameters.size(), parameters[0].label.c_str(), parameters[0].shortname.c_str());
+                    AKPLATFORM::OutputDebugMsg(buffer);
+                }
+                
                 // preview not supported yet
                 ShowPopupWindow();
 
@@ -255,7 +224,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
 
         // saves the code..
         // and now try to compile using faustInterpreter object..
-        bool res = faustInterpreter.buildPlugin(wstring2string(dspCode));
+        bool res = faustPluginLoader.buildPlugin(wstring2string(dspCode));
         char dbg[256];
         snprintf(dbg, 256, "OnBuildButtonClicked: result is %d", res);
         AKPLATFORM::OutputDebugMsg(dbg);
