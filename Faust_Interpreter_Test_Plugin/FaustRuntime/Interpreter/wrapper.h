@@ -31,7 +31,7 @@ public:
     template <typename T>
     void setParameter(const std::string name, T value)
     {
-    mapui.setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
+    mapui->setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
     }
 
     FAUSTFLOAT getParameter(const std::string& name);
@@ -40,7 +40,7 @@ private:
 
     interpreter_dsp_factory* factory;
     dsp* mdsp;
-    myMapUI mapui;
+    myMapUI* mapui;
     std::string currentSHA;
     
     void setPluginConfiguration(PluginConfiguration&);
