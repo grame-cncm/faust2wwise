@@ -9,6 +9,8 @@
 #include <fstream>
 #include <cstdlib>
 #include <sstream>
+#include <locale>
+#include <codecvt>
 
 namespace PluginUtils
 {
@@ -76,5 +78,18 @@ namespace PluginUtils
             return false;
         }
         return tempDirectory.string();
-    }    
+    }   
+    
+    std::string wstring2string(const std::wstring wstr)
+    {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        return converter.to_bytes(wstr);
+    }
+
+    std::wstring string2wstring(const std::string str)
+    {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        return converter.from_bytes(str);   
+    }
+
 }

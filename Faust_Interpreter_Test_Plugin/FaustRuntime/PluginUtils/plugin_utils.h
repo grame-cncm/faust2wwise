@@ -17,7 +17,9 @@ namespace PluginUtils{
     bool moveFile(const std::string&, const std::string&);
 
     std::string createTempDir(const std::string&);
-    
+
+    std::string wstring2string(const std::wstring);
+    std::wstring string2wstring(const std::string);
 }
 
 #endif

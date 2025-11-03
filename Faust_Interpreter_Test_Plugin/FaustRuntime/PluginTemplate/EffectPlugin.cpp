@@ -21,8 +21,3 @@ void WwiseEffectPlugin::callback(std::vector<FAUSTFLOAT*>& outputs, const AkUInt
 {
 
 }
-
-void WwiseEffectPlugin::fillRestOfBuffersWithSilence(const AkUInt32 channels)
-{
-    
-}

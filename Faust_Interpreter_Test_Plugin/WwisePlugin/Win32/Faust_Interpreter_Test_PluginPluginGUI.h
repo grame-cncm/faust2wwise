@@ -27,6 +27,7 @@ the specific language governing permissions and limitations under the License.
 
 #include "../Faust_Interpreter_Test_PluginPlugin.h"
 #include "plugin_loader.h"
+#include "PluginTemplate/UI/plugin_window.h"
 
 enum WM_STATE{
     INIT_STATE=1,
@@ -41,6 +42,7 @@ class Faust_Interpreter_Test_PluginPluginGUI final
 {
 public:
 	Faust_Interpreter_Test_PluginPluginGUI();
+    ~Faust_Interpreter_Test_PluginPluginGUI();
 
 	HINSTANCE GetResourceHandle() const override;
 
@@ -62,23 +64,26 @@ private:
 
     HWND faustWnd,editorWnd;
     WM_STATE state;
+
+    // HINT: PluginLoader is a singleton.
+    PluginLoader& faustPluginLoader = PluginLoader::getInstance(); 
+    PluginWindow* pluginWindow;
+
+    std::wstring entry_code;
+    std::wstring dspCode;
+    std::wstring codePath;
     
     bool SetCodeEditorText(); 
     bool SaveCodeEditorText();
     bool OnPreviewButtonClicked();
     bool OnBuildButtonClicked();
-    void ShowPopupWindow();
+    void ShowEmptyParametersWindow(LPCWSTR);
+    void onExit();
 
     bool loadLastSavedCode();
     bool saveCurrentCodeState();
 
+    void closePluginWindow();
+
     void debugPrint(std::wstring, size_t);
-
-    // IMPORTANT : Declare faustPluginLoader before faustInterpreter. Initialization order matters.
-    // HINT: PluginLoader is a singleton. It defines the configuration that is shared with the InterpreterWrapper class, which in fact has a member reference to it.
-    PluginLoader& faustPluginLoader = PluginLoader::getInstance(); 
-
-    std::wstring entry_code;
-    std::wstring dspCode;
-    std::wstring codePath;
 };

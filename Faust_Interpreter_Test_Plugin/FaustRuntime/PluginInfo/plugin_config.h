@@ -4,6 +4,9 @@
 #define STORAGE_DIRNAME "_f2wTemp_"
 #define DEFAULT_NAME_APP "Faust2WwisePlugin"
 
+#define PREVIEW_WINDOW_WIDTH 640
+#define PREVIEW_WINDOW_HEIGHT 480
+
 #include <string>
 
 struct PluginConfiguration {
@@ -30,6 +33,11 @@ struct PluginConfiguration {
     int bufferSize=0;
     int speakersAvail=0;
     int maxSpeakersAvail=0;
+
+    struct PreviewWindow {
+        int width = int(PREVIEW_WINDOW_WIDTH);
+        int height = int (PREVIEW_WINDOW_HEIGHT);
+    }preview;
 
     void reset()
     {
