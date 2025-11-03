@@ -91,13 +91,6 @@ void InterpreterWrapper::setupDSP(int sampleRate)
     mdsp->init(sampleRate);
 }
 
-template <typename T>
-void InterpreterWrapper::setParameter(const std::string name, T value)
-{
-    // mapui.setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
-    mapui.setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
-}
-
 FAUSTFLOAT InterpreterWrapper::getParameter(const std::string& name)
 {
     return mapui.getParamValue(name); 
@@ -130,7 +123,8 @@ void InterpreterWrapper::setPluginConfiguration(PluginConfiguration &cfg)
 void InterpreterWrapper::setParameterList(ParameterList& parameters, PluginConfiguration& cfg)
 {
     
-    const int numParams = mapui.getParamsCount();
+    // const int numParams = mapui.getParamsCount(); // @TODO fix bug : getParamsCount retuns cached values from past runs. 
+    const int numParams = mapui.controls.size();
     parameters.resize(numParams);
 
     for (const auto& control : mapui.controls)
@@ -140,10 +134,12 @@ void InterpreterWrapper::setParameterList(ParameterList& parameters, PluginConfi
         param.type = item.type;
         param.label = item.label;
         param.shortname = item.shortname;
+        param.index = item.index;
         param.init = item.init;
         param.pmin = item.fmin;
         param.pmax = item.fmax;
         param.step = item.step;
+        param.value.store(item.init);
         
         parameters[item.index] = std::move(param);
     }

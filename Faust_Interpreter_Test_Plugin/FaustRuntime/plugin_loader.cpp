@@ -84,36 +84,38 @@ bool PluginLoader::createPlugin(std::string &dspCode)
     return true;
 }
 
-void PluginLoader::setupAudio(int SR)
+int PluginLoader::setupAudio(int SR)
 {
     if (pluginState.load() == PluginState::SETUP_PLUGIN_OK)
     {
         faustInterpreter.setupDSP(SR);
         cfg.sampleRate = SR;
-        // *channelsRequested = cfg.num_outputs; // change channels requested to 
-
+        
         pluginState.store(PluginState::READY);
+
+        return cfg.num_outputs; // return channels requested 
+
     }
+    return 0;
 }
 
 void PluginLoader::unloadPlugin()
 {
-    //NOTE: For now, apart from the constructor, this function is never yet called..
+    //NOTE: For now, apart from the destructor, this function is never yet called..
 
-    PluginState state = pluginState.load();
+    // PluginState state = pluginState.load();
 
     // first ensure playback is paused within Execute function
-    if (state == PluginState::READY)
-    {
+    // if (state == PluginState::READY)
+    // {
         pluginState.store(PluginState::ZERO_STATE);
-    }
+    // }
 
     // reset plugin
     if (plugin)
        plugin->reset();
     
     // unload plugin
-    // delete plugin;
     plugin = nullptr;
 
     // reset internal
@@ -125,9 +127,9 @@ void PluginLoader::unloadPlugin()
     parameters.shrink_to_fit();
 }
 
-void PluginLoader::callback(std::vector<FAUSTFLOAT*>& data, const AkUInt32 size)
+void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 size)
 {
-    plugin->callback(data, size);
+    plugin->callback(outdata, size);
 }
 
 

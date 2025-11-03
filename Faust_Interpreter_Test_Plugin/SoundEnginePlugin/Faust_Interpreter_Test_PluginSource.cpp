@@ -121,30 +121,34 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAl
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
+    durationValue = m_pParams->RTPC.fDuration;
+
     m_durationHandler.Setup(m_pParams->RTPC.fDuration, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
 
-    // Set the speaker configuration (using MAX_POSSIBLE_SPEAKERS = 14)
-    GetSpeakerConfigChannelMask(speakersAvail);
+    int channelsRequested = pluginLoader.setupAudio(
+        static_cast<int>(in_rFormat.uSampleRate)
+    );
+    // Set the speaker configuration
+    in_rFormat.channelConfig.SetStandard( GetSpeakerConfigChannelMask(channelsRequested) );
+    speakersAvail = in_rFormat.channelConfig.uNumChannels;
 
     WwiseOutputs.resize(speakersAvail, nullptr); // TODO optimize numChannels latter..
-
-    pluginLoader.setupAudio(
-        static_cast<int>(in_rFormat.uSampleRate)//,
-        // &channelsRequested
-    );
 
     return AK_Success;
 }
 
 AKRESULT Faust_Interpreter_Test_PluginSource::Term(AK::IAkPluginMemAlloc* in_pAllocator)
 {
+    AKPLATFORM::OutputDebugMsg("Term is called!\n");
+    pluginLoader.unloadPlugin();
+    // m_durationHandler.SetDuration(0);
     AK_PLUGIN_DELETE(in_pAllocator, this);
     return AK_Success;
 }
 
 AKRESULT Faust_Interpreter_Test_PluginSource::Reset()
 {
-    speakersAvail = static_cast<int>(MAX_POSSIBLE_SPEAKERS);
+    AKPLATFORM::OutputDebugMsg("Reset is called!\n");
     return AK_Success;
 }
 
@@ -156,13 +160,13 @@ AKRESULT Faust_Interpreter_Test_PluginSource::GetPluginInfo(AkPluginInfo& out_rP
     return AK_Success;
 }
 
+/*
 void Faust_Interpreter_Test_PluginSource::initializeAllChannelsWithSilence(const AkUInt32 framesToProcess)
 {
         // Runs only once filling the rest of the faust output channels with silence,  ...
     // ... and only in case the channels requested by the faust dsp program is greater 
     // than the available channels wwise can support.
 
-    static std::vector<AkReal32> silenceBuffer;
     if (silenceBuffer.size() < framesToProcess) {
         silenceBuffer.resize(framesToProcess, 0.0f);
     
@@ -174,28 +178,28 @@ void Faust_Interpreter_Test_PluginSource::initializeAllChannelsWithSilence(const
             }
             AKPLATFORM::OutputDebugMsg("Filled the silence buffer!\n");
         }
-        speakersAvail = channelsRequested;
     }
 }
+    */
 
 void Faust_Interpreter_Test_PluginSource::Execute(AkAudioBuffer* out_pBuffer)
 {
-    m_durationHandler.SetDuration(m_pParams->RTPC.fDuration);
-    m_durationHandler.ProduceBuffer(out_pBuffer);
-
-    const AkUInt32 uNumChannels = out_pBuffer->NumChannels();
-    const AkUInt32 framesToProcess = out_pBuffer->uValidFrames;
-
-    initializeAllChannelsWithSilence(framesToProcess);
     
     if ( pluginLoader.getPluginState() == PluginState::READY)
     {
+        m_durationHandler.SetDuration(m_pParams->RTPC.fDuration);
+        m_durationHandler.ProduceBuffer(out_pBuffer);
+
+        const AkUInt32 uNumChannels = out_pBuffer->NumChannels();
+        const AkUInt32 framesToProcess = out_pBuffer->uValidFrames;
+
         for (AkUInt32 i = 0; i < speakersAvail; ++i)
         {
             WwiseOutputs[i] = (AkReal32* AK_RESTRICT) out_pBuffer->GetChannel(i);
         }
-        AKPLATFORM::OutputDebugMsg("Execute function is running!");
+        AKPLATFORM::OutputDebugMsg("Execute function is running!\n");
         pluginLoader.callback(WwiseOutputs, framesToProcess);
+    
     }
 }
 

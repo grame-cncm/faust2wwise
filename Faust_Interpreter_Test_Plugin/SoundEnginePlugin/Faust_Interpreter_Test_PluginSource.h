@@ -27,8 +27,6 @@ the specific language governing permissions and limitations under the License.
 #ifndef Faust_Interpreter_Test_PluginSource_H
 #define Faust_Interpreter_Test_PluginSource_H
 
-#define MAX_POSSIBLE_SPEAKERS 14
-
 #include "Faust_Interpreter_Test_PluginSourceParams.h"
 #include <AK/Plugin/PluginServices/AkFXDurationHandler.h>
 #include "plugin_loader.h"
@@ -71,10 +69,11 @@ private:
 
     PluginLoader& pluginLoader = PluginLoader::getInstance();
     AkUInt32 Faust_Interpreter_Test_PluginSource::GetSpeakerConfigChannelMask(int predefinedOutputs);
-    int speakersAvail{MAX_POSSIBLE_SPEAKERS}, 
-        channelsRequested{0};
+    int speakersAvail;
     std::vector<FAUSTFLOAT*> WwiseOutputs;
-    void initializeAllChannelsWithSilence(const AkUInt32);
+    // std::vector<AkReal32> silenceBuffer;
+    // void initializeAllChannelsWithSilence(const AkUInt32);
+    AkReal32 durationValue;
 };
 
 #endif // Faust_Interpreter_Test_PluginSource_H

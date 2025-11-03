@@ -29,7 +29,11 @@ public:
     void callback(int, FAUSTFLOAT**, FAUSTFLOAT**);
 
     template <typename T>
-    void setParameter(const std::string name, T value);
+    void setParameter(const std::string name, T value)
+    {
+    mapui.setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
+    }
+
     FAUSTFLOAT getParameter(const std::string& name);
 
 private:

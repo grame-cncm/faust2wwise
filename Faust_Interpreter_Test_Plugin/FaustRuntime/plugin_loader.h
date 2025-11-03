@@ -2,6 +2,7 @@
 #define FAUST_PLUGIN_LOADER_H
 
 #include "PluginUtils/syscall.h"
+// #include "Interpreter/debugDSP.h"
 #include "Interpreter/wrapper.h"
 #include "PluginTemplate/SourcePlugin.h"
 #include "PluginTemplate/EffectPlugin.h"
@@ -32,7 +33,7 @@ public:
     PluginState getPluginState()            {   return pluginState.load();  }
 
     bool createPlugin(std::string&); // TODO copy string?
-    void setupAudio(int); //int*
+    int setupAudio(int);
     void unloadPlugin();
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     

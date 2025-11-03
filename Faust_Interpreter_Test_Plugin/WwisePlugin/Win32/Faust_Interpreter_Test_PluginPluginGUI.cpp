@@ -27,28 +27,12 @@ the specific language governing permissions and limitations under the License.
 #include "Faust_Interpreter_Test_PluginPluginGUI.h"
 #include "../resource.h"
 #include "PluginUtils/syscall.h"
+#include "PluginUtils/plugin_utils.h"
 #include <AK/AkWwiseSDKVersion.h>
 #include "entry_code.h"
 #include <windows.h>
 #include <sstream>
-#include <locale>
-#include <codecvt>
 #include <thread>
-
-// @TODO : Improve the way code in the editor is stored/used
-#define LASTCODE_FNAME "last_code.dsp"
-
-inline std::string wstring2string(const std::wstring wstr)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    return converter.to_bytes(wstr);
-}
-
-inline std::wstring string2wstring(const std::string str)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    return converter.from_bytes(str);   
-}
 
 AK_WWISE_PLUGIN_GUI_WINDOWS_BEGIN_POPULATE_TABLE(PropertyTable)
 AK_WWISE_PLUGIN_GUI_WINDOWS_END_POPULATE_TABLE()
@@ -57,13 +41,19 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
     : dspCode(L"")
     , faustWnd(nullptr)
     , editorWnd(nullptr)
+    , pluginWindow(nullptr)
     , state(WM_STATE::NONINIT_STATE)
 {
     std::string exportPath = faustPluginLoader.getExportPath();
-    codePath = string2wstring(exportPath + "/" + std::string(LASTCODE_FNAME));
-    entry_code = string2wstring( std::string(default_entry_code));
+    codePath = PluginUtils::string2wstring(exportPath + "/" + std::string(LASTCODE_FNAME));
+    entry_code = PluginUtils::string2wstring( std::string(default_entry_code));
     
     AKPLATFORM::OutputDebugMsg("Faust :: Constructor got called!\n");
+}
+
+Faust_Interpreter_Test_PluginPluginGUI::~Faust_Interpreter_Test_PluginPluginGUI()
+{   
+    onExit();
 }
 
 HINSTANCE Faust_Interpreter_Test_PluginPluginGUI::GetResourceHandle() const
@@ -139,11 +129,9 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
         }
         case WM_DESTROY:
         {
-            faustPluginLoader.unloadPlugin();
             AKPLATFORM::OutputDebugMsg("Faust :: WM_DESTROY got called!\n");
-            SaveCodeEditorText();
-            faustWnd = editorWnd = nullptr;
             state = WM_STATE::EXIT_STATE;
+            onExit();
             bRet = TRUE;
             break;
         }
@@ -159,7 +147,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::SetCodeEditorText()
     if (loadLastSavedCode())
         text = dspCode;
     else{
-        text = string2wstring(std::string(default_entry_code));
+        text = PluginUtils::string2wstring(std::string(default_entry_code));
     }
     SetWindowTextW(editorWnd, text.c_str());
     return true;
@@ -193,27 +181,49 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
         // build plugin dll asynchronously
         std::thread([this]() {
                 
-                bool pluginCreated = faustPluginLoader.createPlugin(wstring2string(this->dspCode));
+                bool pluginCreated = faustPluginLoader.createPlugin(PluginUtils::wstring2string(this->dspCode));
                 
                 if (!pluginCreated)
                     return;
                     
                 ParameterList &parameters = faustPluginLoader.getParameters();
+                PluginConfiguration& cfg = faustPluginLoader.getConfiguration();
 
-                // // verify that params are obtained...
-                if (!parameters.empty())
+                // verify that params are obtained...
+                if (parameters.empty())
                 {
-                    char buffer[512];
-                    snprintf(buffer, sizeof(buffer), "Parameters size: %zu and the first one is label %s , name %s \n", parameters.size(), parameters[0].label.c_str(), parameters[0].shortname.c_str());
-                    AKPLATFORM::OutputDebugMsg(buffer);
+                    ShowEmptyParametersWindow(PluginUtils::string2wstring( cfg.plugin_name ).c_str());
+                    PluginState state = faustPluginLoader.getPluginState();
+                    while(state==PluginState::SETUP_PLUGIN_OK || state==PluginState::READY)
+                    {
+                        state = faustPluginLoader.getPluginState();
+                    }
                 }
-                
-                // preview not supported yet
-                ShowPopupWindow();
+                else
+                {                
+                    pluginWindow = new PluginWindow(faustWnd,cfg,parameters);
+                    if (pluginWindow->isWindowCreated())
+                    {
+                        pluginWindow->Show();
+                        PluginState state = faustPluginLoader.getPluginState();
+                        while
+                        ( 
+                            (state==PluginState::SETUP_PLUGIN_OK || state==PluginState::READY)
+                            && pluginWindow 
+                            && pluginWindow->isActive() 
+                        )
+                        {
+                            pluginWindow->Update();
+                            state = faustPluginLoader.getPluginState();
+                        }
+                        closePluginWindow();
+                    }
+                }
+            
 
         }).detach();
 
-        return true; // return the result of the faust2wwise dynamic compilation..
+        return true; // TODO: make it void?
     }
     return false;
 }
@@ -224,19 +234,21 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
 
         // saves the code..
         // and now try to compile using faustInterpreter object..
-        bool res = faustPluginLoader.buildPlugin(wstring2string(dspCode));
+        bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(dspCode));
         char dbg[256];
         snprintf(dbg, 256, "OnBuildButtonClicked: result is %d", res);
         AKPLATFORM::OutputDebugMsg(dbg);
 
         //@TODO Design a way to allow user to inspect the output of the build (errors/warnings/success etc..)
+
+        return res; // TODO make it void?
     }   
     return false;
 }
 
-void Faust_Interpreter_Test_PluginPluginGUI::ShowPopupWindow()
+void Faust_Interpreter_Test_PluginPluginGUI::ShowEmptyParametersWindow(LPCWSTR pluginName)
 {
-    MessageBoxW(faustWnd, L"Output not yet supported!", L"FAUST Code Output", MB_OK | MB_ICONINFORMATION);
+    MessageBoxW(faustWnd, L"The DSP code does not define any parameters. Simply press \'Play\' to start playback", pluginName , MB_OK | MB_ICONINFORMATION);
 }
 
 
@@ -296,6 +308,25 @@ void Faust_Interpreter_Test_PluginPluginGUI::debugPrint(std::wstring text, size_
         len, narrowDebug.c_str());
 
     AKPLATFORM::OutputDebugMsg(output);
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::closePluginWindow()
+{
+    if (pluginWindow)
+    {   
+        pluginWindow->Close();
+        delete pluginWindow;
+        pluginWindow = nullptr;
+        faustPluginLoader.unloadPlugin();
+    }
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::onExit()
+{
+    SaveCodeEditorText();
+    closePluginWindow();            
+    faustPluginLoader.unloadPlugin();
+    faustWnd = editorWnd = nullptr;
 }
 
 AK_ADD_PLUGIN_CLASS_TO_CONTAINER(
