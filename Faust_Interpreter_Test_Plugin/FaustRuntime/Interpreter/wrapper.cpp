@@ -5,6 +5,7 @@
 InterpreterWrapper::InterpreterWrapper()
     : factory(nullptr)
     , mdsp(nullptr)
+    , mapui(nullptr)
 {}
 
 InterpreterWrapper::~InterpreterWrapper()
@@ -14,7 +15,13 @@ InterpreterWrapper::~InterpreterWrapper()
 
 void InterpreterWrapper::reset()
 {
-    mapui.clearParameters();
+    if (mapui)
+    {
+        mapui->clearParameters();
+        delete mapui;
+        mapui = nullptr;
+    }
+
     if (mdsp)
     {
         delete mdsp;
@@ -74,13 +81,20 @@ bool InterpreterWrapper::createDSP()
         std::cerr << "Cannot create instance " << std::endl;
         return false;
     }
+
+    mapui = new myMapUI();
+    if (!mapui)
+    {
+        std::cerr<<" Cannot create mapui "<<std::endl;
+        return false;
+    }
     return true;
 }
 
 bool InterpreterWrapper::configurePlugin(PluginConfiguration &cfg, ParameterList& parameters)
 {
-    mdsp->buildUserInterface(&mapui);
-    mapui.fillShortNames();
+    mdsp->buildUserInterface(mapui);
+    mapui->fillShortNames();
     setPluginConfiguration(cfg);
     setParameterList(parameters, cfg);
     return true; // TODO change return?
@@ -93,7 +107,7 @@ void InterpreterWrapper::setupDSP(int sampleRate)
 
 FAUSTFLOAT InterpreterWrapper::getParameter(const std::string& name)
 {
-    return mapui.getParamValue(name); 
+    return mapui->getParamValue(name); 
 }
 
 void InterpreterWrapper::setPluginConfiguration(PluginConfiguration &cfg)
@@ -123,11 +137,10 @@ void InterpreterWrapper::setPluginConfiguration(PluginConfiguration &cfg)
 void InterpreterWrapper::setParameterList(ParameterList& parameters, PluginConfiguration& cfg)
 {
     
-    // const int numParams = mapui.getParamsCount(); // @TODO fix bug : getParamsCount retuns cached values from past runs. 
-    const int numParams = mapui.controls.size();
+    const int numParams = mapui->getParamsCount(); 
     parameters.resize(numParams);
 
-    for (const auto& control : mapui.controls)
+    for (const auto& control : mapui->controls)
     {
         myMapUI::itemInfo item = control.second;
         Parameter param;
