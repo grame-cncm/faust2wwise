@@ -1,3 +1,0 @@
-[submodule "Faust_Interpreter_Test_Plugin/external/nlohmann/json"]
-	path = Faust_Interpreter_Test_Plugin/external/nlohmann/json
-	url = https://github.com/nlohmann/json.git
