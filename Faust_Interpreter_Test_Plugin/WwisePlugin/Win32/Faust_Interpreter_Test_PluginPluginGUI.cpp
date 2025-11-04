@@ -43,6 +43,7 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
     , editorWnd(nullptr)
     , pluginWindow(nullptr)
     , state(WM_STATE::NONINIT_STATE)
+    , UnqBuildCompleteWndMsg(RegisterWindowMessage(L"FaustBuildCompleteMessage"))
 {
     std::string exportPath = faustPluginLoader.getExportPath();
     codePath = PluginUtils::string2wstring(exportPath + "/" + std::string(LASTCODE_FNAME));
@@ -85,7 +86,6 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
     LPARAM in_lParam,
     LRESULT& out_lResult)
 {
-    BOOL bRet = FALSE;
 
     switch (state)
     {
@@ -95,7 +95,15 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             state = WM_STATE::RUN_STATE;
         }
     }
-    
+
+    if (in_message == UnqBuildCompleteWndMsg)   // UnqBuildCompleteWndMsg is runtime evaluated. Have to be within an if condition instead of being within a case statement.
+    {
+        EnableWindow((HWND)in_wParam, TRUE); // re-enable build button after completion
+        MessageBoxW(faustWnd, ((bool)in_lParam) ? L"Success!" : L"Failed.", L"Faust2Wwise Build Result", MB_OK);
+        return TRUE;
+    }
+
+    BOOL bRet = FALSE;
     switch (in_message)
     {
         case WM_INITDIALOG:
@@ -117,10 +125,12 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
                 if (id == IDC_BUTTON_PREVIEW)
                 {
                     //@TODO Pass the name of the Plugin  - > create a field for defining the plugin name, or maybe a fileloader just like the online editor.
+                    SaveCodeEditorText();
                     OnPreviewButtonClicked();
                 }
                 if (id == IDC_BUTTON_BUILD)
                 {
+                    SaveCodeEditorText();
                     OnBuildButtonClicked();
                 }
             }    
@@ -228,29 +238,35 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
     return false;
 }
 
-bool Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
+void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
+    
+    HWND buildButton = GetDlgItem(faustWnd, IDC_BUTTON_BUILD);
+    EnableWindow(buildButton, FALSE);   // disable build button...
 
-    if (SaveCodeEditorText()) {
+    std::thread([this, buildButton]()
+    {
 
-        // saves the code..
-        // and now try to compile using faustInterpreter object..
+        // compile using faust2wwise implementation..
         bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(dspCode));
+        
+        // temp log message
         char dbg[256];
         snprintf(dbg, 256, "OnBuildButtonClicked: result is %d", res);
         AKPLATFORM::OutputDebugMsg(dbg);
 
+        // notify GUI thread - re-enabling the button will happen after the message is received within winProc function.
+        PostMessage(faustWnd, UnqBuildCompleteWndMsg, (WPARAM)buildButton, (LPARAM)res);
+
         //@TODO Design a way to allow user to inspect the output of the build (errors/warnings/success etc..)
 
-        return res; // TODO make it void?
-    }   
-    return false;
+    }).detach();
+
 }
 
 void Faust_Interpreter_Test_PluginPluginGUI::ShowEmptyParametersWindow(LPCWSTR pluginName)
 {
     MessageBoxW(faustWnd, L"The DSP code does not define any parameters. Simply press \'Play\' to start playback", pluginName , MB_OK | MB_ICONINFORMATION);
 }
-
 
 bool Faust_Interpreter_Test_PluginPluginGUI::loadLastSavedCode()
 {
