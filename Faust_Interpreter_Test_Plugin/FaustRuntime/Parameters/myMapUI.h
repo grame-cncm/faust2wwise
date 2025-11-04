@@ -24,6 +24,11 @@ struct myMapUI : public MapUI
         {}
     };
 
+    ~myMapUI() 
+    {
+        resetStaticCounter();
+    }
+
     std::unordered_map<const FAUSTFLOAT*,itemInfo> controls;
 
     void fillShortNames()
@@ -45,13 +50,18 @@ struct myMapUI : public MapUI
         controls.emplace(zone, std::move(item));
     }
 
+    void resetStaticCounter()
+    {
+        ctr = 0;
+    }
+
     void clearParameters()
     {
         controls.clear();
         fLabelZoneMap.clear();
         fShortnameZoneMap.clear();
         fPathZoneMap.clear();
-        ctr = 0;
+        resetStaticCounter();
     }
 
     // -- active widgets

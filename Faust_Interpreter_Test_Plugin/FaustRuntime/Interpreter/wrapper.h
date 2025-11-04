@@ -20,7 +20,7 @@ public:
 
     bool compileDSP(const std::string dspCode, const PluginConfiguration& cfg);
     
-    bool createDSP();
+    bool createDSPandUI();
 
     bool configurePlugin(PluginConfiguration&, ParameterList&);
 
