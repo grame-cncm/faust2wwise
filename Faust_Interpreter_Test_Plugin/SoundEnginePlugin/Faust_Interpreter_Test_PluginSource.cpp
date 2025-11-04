@@ -121,9 +121,7 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAl
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
-    durationValue = m_pParams->RTPC.fDuration;
-
-    m_durationHandler.Setup(m_pParams->RTPC.fDuration, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
+    m_durationHandler.Setup(0.0f, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
 
     int channelsRequested = pluginLoader.setupAudio(
         static_cast<int>(in_rFormat.uSampleRate)
@@ -200,6 +198,10 @@ void Faust_Interpreter_Test_PluginSource::Execute(AkAudioBuffer* out_pBuffer)
         AKPLATFORM::OutputDebugMsg("Execute function is running!\n");
         pluginLoader.callback(WwiseOutputs, framesToProcess);
     
+    }
+    else{
+        m_durationHandler.SetDuration(0.0f);
+        m_durationHandler.ProduceBuffer(out_pBuffer);
     }
 }
 
