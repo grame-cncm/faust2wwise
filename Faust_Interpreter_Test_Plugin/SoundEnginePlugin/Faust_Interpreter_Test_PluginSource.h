@@ -73,6 +73,8 @@ private:
     std::vector<FAUSTFLOAT*> WwiseOutputs;
     // std::vector<AkReal32> silenceBuffer;
     // void initializeAllChannelsWithSilence(const AkUInt32);
+
+    bool isInitializedOnce;
 };
 
 #endif // Faust_Interpreter_Test_PluginSource_H

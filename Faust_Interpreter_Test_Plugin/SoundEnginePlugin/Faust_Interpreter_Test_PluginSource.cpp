@@ -121,25 +121,44 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAl
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
-    m_durationHandler.Setup(0.0f, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
+    PluginState state = pluginLoader.getPluginState();
+    
+    if (state != PluginState::READY)
+    {
 
-    int channelsRequested = pluginLoader.setupAudio(
-        static_cast<int>(in_rFormat.uSampleRate)
-    );
-    // Set the speaker configuration
-    in_rFormat.channelConfig.SetStandard( GetSpeakerConfigChannelMask(channelsRequested) );
-    speakersAvail = in_rFormat.channelConfig.uNumChannels;
+        m_durationHandler.Setup(0.0f, in_pContext->GetNumLoops(), in_rFormat.uSampleRate);
+        
+        int channelsRequested = pluginLoader.setupAudio(
+            static_cast<int>(in_rFormat.uSampleRate)
+        );
+        // Set the speaker configuration
+        in_rFormat.channelConfig.SetStandard( GetSpeakerConfigChannelMask(channelsRequested) );
+        speakersAvail = in_rFormat.channelConfig.uNumChannels;
 
-    WwiseOutputs.resize(speakersAvail, nullptr); // TODO optimize numChannels latter..
+        WwiseOutputs.resize(speakersAvail, nullptr);
 
-    return AK_Success;
+        isInitializedOnce = true;
+        return AK_Success;
+    }
+    isInitializedOnce = false;
+    return AK_AlreadyInitialized;
 }
 
 AKRESULT Faust_Interpreter_Test_PluginSource::Term(AK::IAkPluginMemAlloc* in_pAllocator)
 {
     AKPLATFORM::OutputDebugMsg("Term is called!\n");
-    pluginLoader.unloadPlugin();
-    // m_durationHandler.SetDuration(0);
+    
+    if (isInitializedOnce)
+    {
+        // that is an exit signal
+        pluginLoader.unloadPlugin(); 
+    }
+    else    
+    {
+        // that is a subsequent Play trigger, so reset the variable.
+        isInitializedOnce = true;
+    }
+
     AK_PLUGIN_DELETE(in_pAllocator, this);
     return AK_Success;
 }
