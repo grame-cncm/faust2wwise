@@ -42,13 +42,13 @@ bool PluginLoader::createPlugin(std::string &dspCode)
     }
     pluginState.store(PluginState::DSP_COMPILED);
 
-    bool dspCreated = faustInterpreter.createDSP();
-    if (!dspCreated)
+    bool dspuiCreated = faustInterpreter.createDSPandUI();
+    if (!dspuiCreated)
     {
-        pluginState.store(PluginState::ERR_DSP_CREATION);
+        pluginState.store(PluginState::ERR_DSPUI_CREATION);
         return false;
     }
-    pluginState.store(PluginState::DSP_CREATED);
+    pluginState.store(PluginState::DSPUI_CREATED);
 
     bool pluginConfigured = faustInterpreter.configurePlugin(cfg, parameters);
     if (!pluginConfigured)
@@ -67,7 +67,6 @@ bool PluginLoader::createPlugin(std::string &dspCode)
     {
         plugin = &effectPlugin;
     }
-    pluginState.store(PluginState::DSP_CREATED);
     
     bool isSetUp = plugin->setup();
     if (!isSetUp)

@@ -73,7 +73,7 @@ bool InterpreterWrapper::compileDSP(const std::string dspCode, const PluginConfi
     return true;
 }
 
-bool InterpreterWrapper::createDSP()
+bool InterpreterWrapper::createDSPandUI()
 {
     mdsp = factory->createDSPInstance();
     if (!mdsp) {
@@ -87,6 +87,7 @@ bool InterpreterWrapper::createDSP()
         std::cerr<<" Cannot create mapui "<<std::endl;
         return false;
     }
+
     return true;
 }
 
