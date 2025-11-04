@@ -17,7 +17,6 @@ void InterpreterWrapper::reset()
 {
     if (mapui)
     {
-        mapui->clearParameters();
         delete mapui;
         mapui = nullptr;
     }
