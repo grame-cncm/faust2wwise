@@ -76,7 +76,8 @@ private:
     bool SetCodeEditorText(); 
     bool SaveCodeEditorText();
     bool OnPreviewButtonClicked();
-    bool OnBuildButtonClicked();
+    void OnBuildButtonClicked();
+    UINT UnqBuildCompleteWndMsg;
     void ShowEmptyParametersWindow(LPCWSTR);
     void onExit();
 
