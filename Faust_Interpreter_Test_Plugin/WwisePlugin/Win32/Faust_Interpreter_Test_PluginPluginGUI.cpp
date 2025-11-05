@@ -233,7 +233,7 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                         if (pluginWindow){
                             delete pluginWindow;
                             pluginWindow = nullptr;
-                            faustPluginLoader.unloadPlugin(PluginState::RESET);
+                            faustPluginLoader.resetPlugin();
                         }
                     }
                 }
@@ -335,7 +335,7 @@ void Faust_Interpreter_Test_PluginPluginGUI::debugPrint(std::wstring text, size_
 
 void Faust_Interpreter_Test_PluginPluginGUI::onExit()
 {
-    faustPluginLoader.unloadPlugin(PluginState::DESTROY);
+    faustPluginLoader.unloadPlugin();
 
     if (pluginWindow)
     {   
