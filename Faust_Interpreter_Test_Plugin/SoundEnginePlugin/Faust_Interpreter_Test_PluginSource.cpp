@@ -152,12 +152,12 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Term(AK::IAkPluginMemAlloc* in_pAl
     
     if (isInitializedOnce)
     {
-        // that is an exit signal
-        pluginLoader.unloadPlugin(PluginState::RESET); 
+        // that is an reset signal
+        pluginLoader.resetPlugin(); 
     }
     else    
     {
-        // that is a subsequent Play trigger, so reset the variable.
+        // that is a subsequent Play trigger, so reset the variable to true.
         isInitializedOnce = true;
     }
 
