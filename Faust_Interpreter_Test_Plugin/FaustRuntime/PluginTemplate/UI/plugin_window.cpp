@@ -52,8 +52,10 @@ bool PluginWindow::isActive()
 void PluginWindow::Update()
 {
     MSG msg;
-    GetMessage(&msg, nullptr, 0, 0);
-    DispatchMessage(&msg);
+    if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    {
+        DispatchMessage(&msg);
+    }
 }
 
 bool PluginWindow::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

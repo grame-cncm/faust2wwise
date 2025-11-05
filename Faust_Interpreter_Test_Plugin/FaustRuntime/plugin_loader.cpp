@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#define BREATH_TIME_MS 10 // ms
+
 PluginLoader::PluginLoader()
     : pluginState(PluginState::ZERO_STATE)
     , effectPlugin(cfg, parameters, faustInterpreter)
@@ -23,14 +25,14 @@ PluginLoader::PluginLoader()
 
 PluginLoader::~PluginLoader()
 {
-    unloadPlugin();
+    // unloadPlugin(PluginState::DESTROY);
 }
 
 bool PluginLoader::createPlugin(std::string &dspCode)
 {
     
     // reset everything before proceeding 
-    unloadPlugin();
+    unloadPlugin(PluginState::RESET);
 
     pluginState.store(PluginState::PENDING_CREATION);
     
@@ -98,32 +100,35 @@ int PluginLoader::setupAudio(int SR)
     return 0;
 }
 
-void PluginLoader::unloadPlugin()
-{
-    //NOTE: For now, apart from the destructor, this function is never yet called..
+#include <thread>
 
+void PluginLoader::unloadPlugin(PluginState state)
+{
+    pluginState.store(PluginState::ZERO_STATE);
+    
     // PluginState state = pluginState.load();
+    if (state == PluginState::DESTROY){
+        std::this_thread::sleep_for(std::chrono::milliseconds( int(BREATH_TIME_MS) ));
+    }
 
     // first ensure playback is paused within Execute function
-    // if (state == PluginState::READY)
-    // {
-        pluginState.store(PluginState::ZERO_STATE);
-    // }
+    else if (state == PluginState::RESET)
+    {
+        // reset plugin
+        if (plugin)
+        plugin->reset();
+        
+        // unload plugin
+        plugin = nullptr;
 
-    // reset plugin
-    if (plugin)
-       plugin->reset();
-    
-    // unload plugin
-    plugin = nullptr;
+        // reset internal
+        cfg.reset();
+        faustInterpreter.reset();
 
-    // reset internal
-    cfg.reset();
-    faustInterpreter.reset();
-
-    // reset params
-    parameters.clear();
-    parameters.shrink_to_fit();
+        // reset params
+        parameters.clear();
+        parameters.shrink_to_fit();
+    }
 }
 
 void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 size)

@@ -34,7 +34,7 @@ public:
 
     bool createPlugin(std::string&); // TODO copy string?
     int setupAudio(int);
-    void unloadPlugin();
+    void unloadPlugin(PluginState);
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     
     bool buildPlugin(const std::string&);

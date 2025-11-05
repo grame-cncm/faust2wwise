@@ -15,7 +15,9 @@ enum PluginState{
     ERR_SETUP_PLUGIN,
     SETUP_PLUGIN_OK,
     BUILT,
-    READY
+    READY,
+    RESET,
+    DESTROY
 };
 
 #endif

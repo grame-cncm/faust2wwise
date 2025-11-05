@@ -121,6 +121,8 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Init(AK::IAkPluginMemAlloc* in_pAl
     m_pAllocator = in_pAllocator;
     m_pContext = in_pContext;
 
+    AKPLATFORM::OutputDebugMsg("Init is called!\n");
+
     PluginState state = pluginLoader.getPluginState();
     
     if (state != PluginState::READY)
@@ -151,7 +153,7 @@ AKRESULT Faust_Interpreter_Test_PluginSource::Term(AK::IAkPluginMemAlloc* in_pAl
     if (isInitializedOnce)
     {
         // that is an exit signal
-        pluginLoader.unloadPlugin(); 
+        pluginLoader.unloadPlugin(PluginState::RESET); 
     }
     else    
     {
