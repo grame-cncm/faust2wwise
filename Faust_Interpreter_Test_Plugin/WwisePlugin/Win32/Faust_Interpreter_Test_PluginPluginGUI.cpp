@@ -74,7 +74,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::GetDialog(
         out_pTable = PropertyTable;
         return true;
     }
-    // AKPLATFORM::OutputDebugMsg("Faust :: GetDialog got called!\n");
+    AKPLATFORM::OutputDebugMsg("Faust :: GetDialog got called!\n");
     return false;
 }
 
@@ -182,13 +182,15 @@ bool Faust_Interpreter_Test_PluginPluginGUI::SaveCodeEditorText()    // rename t
     return true;
 }
 
-bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
+void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
 {   
     // Important: this function runs asynchronously.
     
-    if (SaveCodeEditorText()){
+    PluginState pluginState = faustPluginLoader.getPluginState();
+    if ( pluginState != PluginState::READY)
+    {
 
-        // build plugin dll asynchronously
+        // build plugin asynchronously
         std::thread([this]() {
                 
                 bool pluginCreated = faustPluginLoader.createPlugin(PluginUtils::wstring2string(this->dspCode));
@@ -198,15 +200,16 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                     
                 ParameterList &parameters = faustPluginLoader.getParameters();
                 PluginConfiguration& cfg = faustPluginLoader.getConfiguration();
+                PluginState pluginState = faustPluginLoader.getPluginState();
 
                 // verify that params are obtained...
                 if (parameters.empty())
                 {
                     ShowEmptyParametersWindow(PluginUtils::string2wstring( cfg.plugin_name ).c_str());
-                    PluginState state = faustPluginLoader.getPluginState();
-                    while(state==PluginState::SETUP_PLUGIN_OK || state==PluginState::READY)
+
+                    while(pluginState==PluginState::SETUP_PLUGIN_OK || pluginState==PluginState::READY)
                     {
-                        state = faustPluginLoader.getPluginState();
+                        pluginState = faustPluginLoader.getPluginState();
                     }
                 }
                 else
@@ -215,27 +218,31 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                     if (pluginWindow->isWindowCreated())
                     {
                         pluginWindow->Show();
-                        PluginState state = faustPluginLoader.getPluginState();
+                        pluginState = faustPluginLoader.getPluginState();
                         while
                         ( 
-                            (state==PluginState::SETUP_PLUGIN_OK || state==PluginState::READY)
+                            (pluginState==PluginState::SETUP_PLUGIN_OK || pluginState==PluginState::READY)
                             && pluginWindow 
                             && pluginWindow->isActive() 
                         )
                         {
                             pluginWindow->Update();
-                            state = faustPluginLoader.getPluginState();
+                            pluginState = faustPluginLoader.getPluginState();
                         }
-                        closePluginWindow();
+                        // close PluginWindow and reset plugin
+                        if (pluginWindow){
+                            delete pluginWindow;
+                            pluginWindow = nullptr;
+                            faustPluginLoader.unloadPlugin(PluginState::RESET);
+                        }
                     }
                 }
             
 
         }).detach();
 
-        return true; // TODO: make it void?
     }
-    return false;
+
 }
 
 void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
@@ -326,23 +333,24 @@ void Faust_Interpreter_Test_PluginPluginGUI::debugPrint(std::wstring text, size_
     AKPLATFORM::OutputDebugMsg(output);
 }
 
-void Faust_Interpreter_Test_PluginPluginGUI::closePluginWindow()
+void Faust_Interpreter_Test_PluginPluginGUI::onExit()
 {
+    faustPluginLoader.unloadPlugin(PluginState::DESTROY);
+
     if (pluginWindow)
     {   
         pluginWindow->Close();
         delete pluginWindow;
         pluginWindow = nullptr;
-        faustPluginLoader.unloadPlugin();
     }
-}
 
-void Faust_Interpreter_Test_PluginPluginGUI::onExit()
-{
+    if(faustWnd)
+    {
+        DestroyWindow(faustWnd);
+        faustWnd = nullptr;
+    }
+    
     SaveCodeEditorText();
-    closePluginWindow();            
-    faustPluginLoader.unloadPlugin();
-    faustWnd = editorWnd = nullptr;
 }
 
 AK_ADD_PLUGIN_CLASS_TO_CONTAINER(
