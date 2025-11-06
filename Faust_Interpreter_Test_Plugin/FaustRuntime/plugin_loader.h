@@ -22,7 +22,7 @@ public:
         static PluginLoader faust_plugin;
         return faust_plugin;
     }
-    ~PluginLoader();
+    ~PluginLoader() = default;
     PluginLoader(const PluginLoader&) = delete; // delete copy constructor
     PluginLoader& operator=(const PluginLoader&) = delete; // delete copy assignment operator
     PluginLoader(PluginLoader&&) = delete; // delete move constructor
@@ -32,7 +32,7 @@ public:
     ParameterList& getParameters()          {   return parameters;  }
     PluginState getPluginState()            {   return pluginState.load();  }
 
-    bool createPlugin(std::string&, int); // TODO copy string?
+    bool createPlugin(std::string&, int);
     int setupAudio(int);
     void unloadPlugin();
     void resetPlugin();

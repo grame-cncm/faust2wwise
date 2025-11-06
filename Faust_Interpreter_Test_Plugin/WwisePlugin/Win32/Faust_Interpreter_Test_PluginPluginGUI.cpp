@@ -154,16 +154,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             {
                 if (id == IDC_AUDIO_INPUT_COMBO)
                 {
-                    // HWND combo = (HWND)lParam;
                     int selection = (int)SendMessageW(audioInputCombo, CB_GETCURSEL, 0, 0);
-
-                    // wchar_t text[128];
-                    // SendMessageW(audioInputCombo, CB_GETLBTEXT, selection, (LPARAM)text);
-
-                    // std::wstringstream ss;
-                    // ss << L"Audio Input changed to: " << text << " with id = "<<selection <<L"\n";
-                    // AKPLATFORM::OutputDebugMsg(PluginUtils::wstring2string(ss.str()).c_str());
-
                     currAudioInputComboSelection = selection;
                 }
             } 
@@ -197,7 +188,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::SetCodeEditorText()
     return true;
 }
 
-bool Faust_Interpreter_Test_PluginPluginGUI::SaveCodeEditorText()    // rename that to GetCodeEditorText
+bool Faust_Interpreter_Test_PluginPluginGUI::SaveCodeEditorText()
 {
     int len = GetWindowTextLengthW(editorWnd);
     if (len <= 0)
@@ -235,12 +226,8 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                 if (!pluginCreated)
                     return;
                     
-                // set audio input for the effect plugins. If it is a source plugin, deactivate option.
-                // HWND audioInput = GetDlgItem(faustWnd, IDC_AUDIO_INPUT_COMBO);
-                // SendMessageW(audioInputCombo, CB_SETCURSEL, currentComboSelection, 0);
-                // if (!faustPluginLoader.setAudioInput(currentComboSelection)){
-                    EnableWindow(audioInputCombo, FALSE);
-                // }
+                // disable selection of audio input source for the effect plugins when preview.
+                EnableWindow(audioInputCombo, FALSE);
 
                 ParameterList &parameters = faustPluginLoader.getParameters();
                 PluginConfiguration& cfg = faustPluginLoader.getConfiguration();

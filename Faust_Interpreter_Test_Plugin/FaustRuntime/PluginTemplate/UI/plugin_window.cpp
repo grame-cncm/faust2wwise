@@ -338,10 +338,6 @@ bool PluginWindow::CreateSlider(Parameter& p)
     if (!hText)
         return false;
     
-    // int scaledMin  = (int)(p.pmin / p.step);
-    // int scaledMax  = (int)(p.pmax / p.step);
-    // int scaledInit = (int)(p.init / p.step);
-
     int scaledMin  = static_cast<int>(std::round(p.pmin / p.step));
     int scaledMax  = static_cast<int>(std::round(p.pmax / p.step));
     int scaledInit = static_cast<int>(std::round(p.init / p.step));

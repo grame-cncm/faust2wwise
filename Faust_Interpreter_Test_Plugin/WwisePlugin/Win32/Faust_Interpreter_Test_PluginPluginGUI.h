@@ -73,7 +73,7 @@ private:
     std::wstring dspCode;
     std::wstring codePath;
 
-    int currAudioInputComboSelection; // @TODO create a map of keys and values for storing available audio inputs for the effect plugins.
+    int currAudioInputComboSelection;
     
     bool SetCodeEditorText(); 
     bool SaveCodeEditorText();
