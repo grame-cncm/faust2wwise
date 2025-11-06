@@ -57,7 +57,12 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
 
 Faust_Interpreter_Test_PluginPluginGUI::~Faust_Interpreter_Test_PluginPluginGUI()
 {   
-    onExit();
+    if (pluginWindow)
+    {   
+        delete pluginWindow;
+        pluginWindow = nullptr;
+    }
+
 }
 
 HINSTANCE Faust_Interpreter_Test_PluginPluginGUI::GetResourceHandle() const
@@ -168,8 +173,9 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
         case WM_DESTROY:
         {
             AKPLATFORM::OutputDebugMsg("Faust :: WM_DESTROY got called!\n");
+            faustPluginLoader.unloadPlugin();    
+            SaveCodeEditorText();
             state = WM_STATE::EXIT_STATE;
-            onExit();
             bRet = TRUE;
             break;
         }
@@ -371,26 +377,6 @@ void Faust_Interpreter_Test_PluginPluginGUI::debugPrint(std::wstring text, size_
         len, narrowDebug.c_str());
 
     AKPLATFORM::OutputDebugMsg(output);
-}
-
-void Faust_Interpreter_Test_PluginPluginGUI::onExit()
-{
-    faustPluginLoader.unloadPlugin();
-
-    if (pluginWindow)
-    {   
-        pluginWindow->Close();
-        delete pluginWindow;
-        pluginWindow = nullptr;
-    }
-
-    if(faustWnd)
-    {
-        DestroyWindow(faustWnd);
-        faustWnd = nullptr;
-    }
-    
-    SaveCodeEditorText();
 }
 
 AK_ADD_PLUGIN_CLASS_TO_CONTAINER(

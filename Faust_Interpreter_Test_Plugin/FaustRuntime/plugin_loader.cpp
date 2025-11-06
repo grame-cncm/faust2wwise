@@ -2,9 +2,6 @@
 #include <thread>
 #include <iostream>
 
-#define BREATH_TIME_MS 10 // time set (ms) to allow async threads to exit properly
-                            // @TODO create a CV instead?
-
 PluginLoader::PluginLoader()
     : pluginState(PluginState::ZERO_STATE)
     , effectPlugin(cfg, parameters, faustInterpreter)
@@ -105,8 +102,6 @@ int PluginLoader::setupAudio(int SR)
 void PluginLoader::unloadPlugin()
 {
     pluginState.store(PluginState::ZERO_STATE);
-    std::this_thread::sleep_for(std::chrono::milliseconds( int(BREATH_TIME_MS) ));
-
 }
 
 void PluginLoader::resetPlugin()
