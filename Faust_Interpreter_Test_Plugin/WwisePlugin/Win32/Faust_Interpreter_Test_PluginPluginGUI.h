@@ -81,12 +81,9 @@ private:
     void OnBuildButtonClicked();
     UINT UnqBuildCompleteWndMsg;
     void ShowEmptyParametersWindow(LPCWSTR);
-    void onExit();
 
     bool loadLastSavedCode();
     bool saveCurrentCodeState();
-
-    void closePluginWindow();
 
     void debugPrint(std::wstring, size_t);
 };
