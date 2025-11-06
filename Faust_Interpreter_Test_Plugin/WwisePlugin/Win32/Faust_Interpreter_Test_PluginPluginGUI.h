@@ -62,7 +62,7 @@ public:
 
 private:
 
-    HWND faustWnd,editorWnd;
+    HWND faustWnd,editorWnd,audioInputCombo;
     WM_STATE state;
 
     // HINT: PluginLoader is a singleton.
@@ -72,6 +72,8 @@ private:
     std::wstring entry_code;
     std::wstring dspCode;
     std::wstring codePath;
+
+    int currAudioInputComboSelection; // @TODO create a map of keys and values for storing available audio inputs for the effect plugins.
     
     bool SetCodeEditorText(); 
     bool SaveCodeEditorText();

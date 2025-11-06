@@ -29,7 +29,7 @@ PluginLoader::~PluginLoader()
     // unloadPlugin(PluginState::DESTROY);
 }
 
-bool PluginLoader::createPlugin(std::string &dspCode)
+bool PluginLoader::createPlugin(std::string &dspCode, int audioInputID)
 {
     
     // reset everything before proceeding 
@@ -69,15 +69,11 @@ bool PluginLoader::createPlugin(std::string &dspCode)
     else if (cfg.plugin_type == "effect")
     {
         plugin = &effectPlugin;
+        effectPlugin.setAudioInput(audioInputID);
     }
     
-    bool isSetUp = plugin->setup();
-    if (!isSetUp)
-    {
-        pluginState.store(PluginState::ERR_SETUP_PLUGIN);
-        return false;
-    }
-    pluginState.store(PluginState::SETUP_PLUGIN_OK);
+    plugin->setup();
+    pluginState.store(PluginState::PLUGIN_SET);
         
 
     // setupAudio is pending - will be called when the play button is pressed ...
@@ -88,11 +84,16 @@ bool PluginLoader::createPlugin(std::string &dspCode)
 
 int PluginLoader::setupAudio(int SR)
 {
-    if (pluginState.load() == PluginState::SETUP_PLUGIN_OK)
+    if (pluginState.load() == PluginState::PLUGIN_SET)
     {
         faustInterpreter.setupDSP(SR);
         cfg.sampleRate = SR;
         
+        if (cfg.plugin_type == "effect")
+        {
+            effectPlugin.setSampleRate(SR);
+        }
+
         pluginState.store(PluginState::READY);
 
         return cfg.num_outputs; // return channels requested 

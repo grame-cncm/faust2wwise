@@ -5,6 +5,6 @@ class WwiseSourcePlugin: public AbstractPlugin
 public:
     WwiseSourcePlugin(PluginConfiguration&, ParameterList&, InterpreterWrapper&);
     ~WwiseSourcePlugin() = default;
-    bool setup() override final;
+    void setup() override final;
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32) override final;
 };

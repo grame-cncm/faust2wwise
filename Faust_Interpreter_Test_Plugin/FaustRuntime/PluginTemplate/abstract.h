@@ -19,10 +19,13 @@ public:
     
     void reset();
 
-    virtual bool setup();    
+    virtual void setup();    
+
     virtual void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32)=0;
     
 protected:
+
+    void setParameters();
 
     PluginConfiguration& cfg;
     ParameterList& parameters;
