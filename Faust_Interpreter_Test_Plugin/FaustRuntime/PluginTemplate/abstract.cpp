@@ -11,19 +11,30 @@ AbstractPlugin::~AbstractPlugin(){
     reset();
 }
 
-bool AbstractPlugin::setup()
+void AbstractPlugin::setup()
 {
     faust_outputs.resize(cfg.num_outputs);
-
-    // this function always return true. 
-    // But it is a (not pure) virtual, so that means:
-    // children are allowed to return false based on their extended implementation.
-    // @TODO : if childeren have no reason to return false, change signature to void return.
-    return true;
 }
 
 void AbstractPlugin::reset()
 {
     faust_outputs.clear();
+
+}
+
+void AbstractPlugin::setParameters()
+{
+    for (auto& p : parameters){
+
+        if (p.type!="bargraph")
+        {
+            faustInterpreter.setParameter(p.shortname,p.value.load());
+        }
+        else
+        {
+            p.value.store(faustInterpreter.getParameter(p.shortname));
+        }
+
+    }
 
 }

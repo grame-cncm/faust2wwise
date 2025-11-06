@@ -5,6 +5,13 @@ class WwiseEffectPlugin: public AbstractPlugin
 public:
     WwiseEffectPlugin(PluginConfiguration&, ParameterList&, InterpreterWrapper&);
     ~WwiseEffectPlugin() override final;
-    bool setup() override final;
+    void setup() override final;
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32) override final;
+    void setAudioInput(int);
+    void setSampleRate(int);
+private:
+    std::vector<FAUSTFLOAT*> faust_inputs;
+    std::vector<std::vector<FAUSTFLOAT>> silenceBuffers;
+    dsp* audioSource;
+    void preprocessInputChannels(const AkUInt32);
 };

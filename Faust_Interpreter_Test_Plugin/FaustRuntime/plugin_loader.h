@@ -32,7 +32,7 @@ public:
     ParameterList& getParameters()          {   return parameters;  }
     PluginState getPluginState()            {   return pluginState.load();  }
 
-    bool createPlugin(std::string&); // TODO copy string?
+    bool createPlugin(std::string&, int); // TODO copy string?
     int setupAudio(int);
     void unloadPlugin();
     void resetPlugin();

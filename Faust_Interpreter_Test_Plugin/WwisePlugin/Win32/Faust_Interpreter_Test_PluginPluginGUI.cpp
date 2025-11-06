@@ -28,6 +28,7 @@ the specific language governing permissions and limitations under the License.
 #include "../resource.h"
 #include "PluginUtils/syscall.h"
 #include "PluginUtils/plugin_utils.h"
+#include "AudioInput/audio_inputs.h"
 #include <AK/AkWwiseSDKVersion.h>
 #include "entry_code.h"
 #include <windows.h>
@@ -41,6 +42,8 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
     : dspCode(L"")
     , faustWnd(nullptr)
     , editorWnd(nullptr)
+    , audioInputCombo(nullptr)
+    , currAudioInputComboSelection(DEFAUT_AUDIO_INPUT_FOR_EFFECTS)
     , pluginWindow(nullptr)
     , state(WM_STATE::NONINIT_STATE)
     , UnqBuildCompleteWndMsg(RegisterWindowMessage(L"FaustBuildCompleteMessage"))
@@ -108,9 +111,17 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
     {
         case WM_INITDIALOG:
         {
-            // AKPLATFORM::OutputDebugMsg("Faust :: INITDIALOG got called!\n");
+            AKPLATFORM::OutputDebugMsg("Faust :: INITDIALOG got called!\n");
             faustWnd = in_hWnd;
             editorWnd = GetDlgItem(faustWnd, IDC_CODE_EDITOR);
+            audioInputCombo = GetDlgItem(faustWnd, IDC_AUDIO_INPUT_COMBO);
+
+            audioInputList audlist = AudioInputs::getAudioInputList();
+            for (auto& [id, name] : audlist)
+            {
+                SendMessageW(audioInputCombo, CB_ADDSTRING, id, (LPARAM)name);
+            }
+            SendMessageW(audioInputCombo, CB_SETCURSEL, currAudioInputComboSelection, 0);
             state = WM_STATE::INIT_STATE;
             bRet=TRUE;
             break;  
@@ -133,7 +144,24 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
                     SaveCodeEditorText();
                     OnBuildButtonClicked();
                 }
-            }    
+            }
+            else if (notify == CBN_SELCHANGE)
+            {
+                if (id == IDC_AUDIO_INPUT_COMBO)
+                {
+                    // HWND combo = (HWND)lParam;
+                    int selection = (int)SendMessageW(audioInputCombo, CB_GETCURSEL, 0, 0);
+
+                    // wchar_t text[128];
+                    // SendMessageW(audioInputCombo, CB_GETLBTEXT, selection, (LPARAM)text);
+
+                    // std::wstringstream ss;
+                    // ss << L"Audio Input changed to: " << text << " with id = "<<selection <<L"\n";
+                    // AKPLATFORM::OutputDebugMsg(PluginUtils::wstring2string(ss.str()).c_str());
+
+                    currAudioInputComboSelection = selection;
+                }
+            } 
             bRet = TRUE;
             break;
         }
@@ -193,11 +221,21 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
         // build plugin asynchronously
         std::thread([this]() {
                 
-                bool pluginCreated = faustPluginLoader.createPlugin(PluginUtils::wstring2string(this->dspCode));
+                bool pluginCreated = faustPluginLoader.createPlugin(
+                    PluginUtils::wstring2string(this->dspCode),
+                    currAudioInputComboSelection
+                );
                 
                 if (!pluginCreated)
                     return;
                     
+                // set audio input for the effect plugins. If it is a source plugin, deactivate option.
+                // HWND audioInput = GetDlgItem(faustWnd, IDC_AUDIO_INPUT_COMBO);
+                // SendMessageW(audioInputCombo, CB_SETCURSEL, currentComboSelection, 0);
+                // if (!faustPluginLoader.setAudioInput(currentComboSelection)){
+                    EnableWindow(audioInputCombo, FALSE);
+                // }
+
                 ParameterList &parameters = faustPluginLoader.getParameters();
                 PluginConfiguration& cfg = faustPluginLoader.getConfiguration();
                 PluginState pluginState = faustPluginLoader.getPluginState();
@@ -207,7 +245,7 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                 {
                     ShowEmptyParametersWindow(PluginUtils::string2wstring( cfg.plugin_name ).c_str());
 
-                    while(pluginState==PluginState::SETUP_PLUGIN_OK || pluginState==PluginState::READY)
+                    while(pluginState==PluginState::PLUGIN_SET || pluginState==PluginState::READY)
                     {
                         pluginState = faustPluginLoader.getPluginState();
                     }
@@ -221,7 +259,7 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                         pluginState = faustPluginLoader.getPluginState();
                         while
                         ( 
-                            (pluginState==PluginState::SETUP_PLUGIN_OK || pluginState==PluginState::READY)
+                            (pluginState==PluginState::PLUGIN_SET || pluginState==PluginState::READY)
                             && pluginWindow 
                             && pluginWindow->isActive() 
                         )
@@ -238,6 +276,8 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
                     }
                 }
             
+                // re-enable the audio Input combo
+                EnableWindow(audioInputCombo, TRUE);
 
         }).detach();
 
