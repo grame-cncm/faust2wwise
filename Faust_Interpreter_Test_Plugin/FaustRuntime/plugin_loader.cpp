@@ -21,11 +21,6 @@ PluginLoader::PluginLoader()
 
 }
 
-PluginLoader::~PluginLoader()
-{
-    // unloadPlugin(PluginState::DESTROY);
-}
-
 bool PluginLoader::createPlugin(std::string &dspCode, int audioInputID)
 {
     
@@ -70,11 +65,9 @@ bool PluginLoader::createPlugin(std::string &dspCode, int audioInputID)
     }
     
     plugin->setup();
-    pluginState.store(PluginState::PLUGIN_SET);
-        
+    pluginState.store(PluginState::PLUGIN_SET);  
 
-    // setupAudio is pending - will be called when the play button is pressed ...
-
+    //HINT: setupAudio is pending - will be called when the play button is pressed ...
 
     return true;
 }
@@ -110,7 +103,7 @@ void PluginLoader::resetPlugin()
     
     // reset plugin
     if (plugin)
-    plugin->reset();
+        plugin->reset();
     
     // unload plugin
     plugin = nullptr;
@@ -128,12 +121,6 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 si
 {
     plugin->callback(outdata, size);
 }
-
-
-// ParameterList& PluginLoader::getParameters()
-// {    
-//     return parameters;  
-// }
 
 #include <fstream>
 #include <cstdlib>
