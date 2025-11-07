@@ -2,6 +2,7 @@
 #include <cctype>
 #include <filesystem>
 #include <iostream>
+#include <deque>
 
 // for the createTempDir
 #include <chrono>
@@ -90,6 +91,31 @@ namespace PluginUtils
     {
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
         return converter.from_bytes(str);   
+    }
+
+
+    std::string parsePluginConfiguration(const std::string& filepath, int numLines)
+    {
+        std::ifstream file(filepath);
+        if (!file.is_open()) {
+            return {};
+        }
+
+        std::deque<std::string> buffer;
+        std::string line;
+        while (std::getline(file, line)) {
+            buffer.push_back(line);
+            if (buffer.size() > static_cast<size_t>(numLines))
+                buffer.pop_front();
+        }
+
+        buffer.pop_front();// discard last line;
+
+        std::ostringstream out;
+        for (const auto& l : buffer)
+            out << l << '\n';
+
+        return out.str();
     }
 
 }

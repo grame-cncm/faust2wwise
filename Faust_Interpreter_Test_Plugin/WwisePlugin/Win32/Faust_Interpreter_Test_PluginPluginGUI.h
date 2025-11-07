@@ -80,6 +80,7 @@ private:
     void OnPreviewButtonClicked();
     void OnBuildButtonClicked();
     UINT UnqBuildCompleteWndMsg;
+    std::string buildOutputText;
     void ShowEmptyParametersWindow(LPCWSTR);
 
     bool loadLastSavedCode();
