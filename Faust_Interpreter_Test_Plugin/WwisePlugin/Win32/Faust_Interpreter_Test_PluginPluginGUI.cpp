@@ -106,8 +106,21 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
 
     if (in_message == UnqBuildCompleteWndMsg)   // UnqBuildCompleteWndMsg is runtime evaluated. Have to be within an if condition instead of being within a case statement.
     {
+        
         EnableWindow((HWND)in_wParam, TRUE); // re-enable build button after completion
-        MessageBoxW(faustWnd, ((bool)in_lParam) ? L"Success!" : L"Failed.", L"Faust2Wwise Build Result", MB_OK);
+
+        bool succeeded = (bool)in_lParam;
+        std::wstring outputMessage;
+        if (succeeded) 
+        {
+            outputMessage = L"Plugin Build Successfully!\n" + PluginUtils::string2wstring(buildOutputText);
+        } else 
+        {
+            outputMessage = std::wstring(L"Failed to build.\nFor more details check the output log file:\n") 
+                            + PluginUtils::string2wstring(buildOutputText);
+        }
+
+        MessageBoxW(faustWnd, outputMessage.c_str(), L"Faust2Wwise Build Result", MB_OK);
         return TRUE;
     }
 
@@ -284,10 +297,9 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
     EnableWindow(buildButton, FALSE);   // disable build button...
 
     std::thread([this, buildButton]()
-    {
-
+    {        
         // compile using faust2wwise implementation..
-        bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(dspCode));
+        bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(dspCode), buildOutputText);
         
         // temp log message
         char dbg[256];

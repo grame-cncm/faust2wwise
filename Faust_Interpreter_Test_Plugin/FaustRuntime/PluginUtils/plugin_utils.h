@@ -20,6 +20,8 @@ namespace PluginUtils{
 
     std::string wstring2string(const std::wstring);
     std::wstring string2wstring(const std::string);
+
+    std::string parsePluginConfiguration(const std::string&, const int numLines = 7);
 }
 
 #endif

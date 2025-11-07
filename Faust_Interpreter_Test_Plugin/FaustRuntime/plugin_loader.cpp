@@ -125,7 +125,7 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 si
 #include <fstream>
 #include <cstdlib>
 #include <sstream>
-bool PluginLoader::buildPlugin(const std::string& dspCode) {
+bool PluginLoader::buildPlugin(const std::string& dspCode, std::string& outputText) {
 
     std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath);
 
@@ -144,5 +144,13 @@ bool PluginLoader::buildPlugin(const std::string& dspCode) {
 
     int result = std::system(cmd.str().c_str());
 
+    std::string logPath = tempDir + "/output.log";
+    if (result == 0)
+    {
+        int numLines = 7; // last 7 lines contain the plugin configuration
+        outputText = PluginUtils::parsePluginConfiguration(logPath, numLines);
+    }
+    else outputText = logPath;  // else return the path to the log file.
+    
     return result == 0;
 }
