@@ -19,6 +19,15 @@ WwiseEffectPlugin::~WwiseEffectPlugin()
     }
 }
 
+void WwiseEffectPlugin::reset()
+{
+    AbstractPlugin::reset();
+    faust_inputs.clear();
+    silenceBuffers.clear();
+    delete audioSource;
+    audioSource = nullptr;
+}
+
 void WwiseEffectPlugin::setup()
 {
     AbstractPlugin::setup();

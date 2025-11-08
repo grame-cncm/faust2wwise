@@ -9,6 +9,11 @@ WwiseSourcePlugin::WwiseSourcePlugin
     : AbstractPlugin(config, params, interpreter)
 {}
 
+void WwiseSourcePlugin::reset()
+{
+    AbstractPlugin::reset();
+}
+
 void WwiseSourcePlugin::setup()
 {
     AbstractPlugin::setup();
