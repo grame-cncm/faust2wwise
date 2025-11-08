@@ -1,3 +1,6 @@
+#ifndef TEMPLATE_EFFECT_PLUGIN_H
+#define TEMPLATE_EFFECT_PLUGIN_H
+
 #include "abstract.h"
 
 class WwiseEffectPlugin: public AbstractPlugin
@@ -5,6 +8,7 @@ class WwiseEffectPlugin: public AbstractPlugin
 public:
     WwiseEffectPlugin(PluginConfiguration&, ParameterList&, InterpreterWrapper&);
     ~WwiseEffectPlugin() override final;
+    void reset() override final;
     void setup() override final;
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32) override final;
     void setAudioInput(int);
@@ -15,3 +19,5 @@ private:
     dsp* audioSource;
     void preprocessInputChannels(const AkUInt32);
 };
+
+#endif

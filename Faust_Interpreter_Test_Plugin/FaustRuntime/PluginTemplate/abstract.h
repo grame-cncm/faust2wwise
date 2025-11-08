@@ -1,5 +1,5 @@
-#ifndef TEMPLATE_PLUGIN_H
-#define TEMPLATE_PLUGIN_H
+#ifndef TEMPLATE_ABSTRACT_PLUGIN_H
+#define TEMPLATE_ABSTRACT_PLUGIN_H
 
 #include "PluginInfo/plugin_config.h"
 #include "Parameters/parameter.h"
@@ -11,13 +11,11 @@ typedef uint32_t AkUInt32;
 class AbstractPlugin{
 public:
 
-    AbstractPlugin();
-
     AbstractPlugin(PluginConfiguration&, ParameterList&, InterpreterWrapper&);
 
     virtual ~AbstractPlugin();
     
-    void reset();
+    virtual void reset();
 
     virtual void setup();    
 
