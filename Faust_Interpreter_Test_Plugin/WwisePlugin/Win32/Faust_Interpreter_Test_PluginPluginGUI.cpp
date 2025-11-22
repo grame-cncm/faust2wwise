@@ -30,7 +30,6 @@ the specific language governing permissions and limitations under the License.
 #include "PluginUtils/plugin_utils.h"
 #include "AudioInput/audio_inputs.h"
 #include <AK/AkWwiseSDKVersion.h>
-#include "entry_code.h"
 #include <windows.h>
 #include <sstream>
 #include <thread>
@@ -47,13 +46,12 @@ Faust_Interpreter_Test_PluginPluginGUI::Faust_Interpreter_Test_PluginPluginGUI()
     , pluginWindow(nullptr)
     , state(WM_STATE::NONINIT_STATE)
     , UnqBuildCompleteWndMsg(RegisterWindowMessage(L"FaustBuildCompleteMessage"))
+    , fileManager(faustPluginLoader.getExportPath())
 {
-    std::string exportPath = faustPluginLoader.getExportPath();
-    codePath = PluginUtils::string2wstring(exportPath + "/" + std::string(LASTCODE_FNAME));
-    entry_code = PluginUtils::string2wstring( std::string(default_entry_code));
-    
     AKPLATFORM::OutputDebugMsg("Faust :: Constructor got called!\n");
 }
+
+// @TODO create a window warning/info for everything
 
 Faust_Interpreter_Test_PluginPluginGUI::~Faust_Interpreter_Test_PluginPluginGUI()
 {   
@@ -62,7 +60,6 @@ Faust_Interpreter_Test_PluginPluginGUI::~Faust_Interpreter_Test_PluginPluginGUI(
         delete pluginWindow;
         pluginWindow = nullptr;
     }
-
 }
 
 HINSTANCE Faust_Interpreter_Test_PluginPluginGUI::GetResourceHandle() const
@@ -99,6 +96,8 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
     {
         case INIT_STATE:
         {
+            // Sets the code editor when plugin is loaded properly
+            AKPLATFORM::OutputDebugMsg("Faust :: INIT_STATE got called!\n");
             SetCodeEditorText();
             state = WM_STATE::RUN_STATE;
         }
@@ -106,21 +105,7 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
 
     if (in_message == UnqBuildCompleteWndMsg)   // UnqBuildCompleteWndMsg is runtime evaluated. Have to be within an if condition instead of being within a case statement.
     {
-        
-        EnableWindow((HWND)in_wParam, TRUE); // re-enable build button after completion
-
-        bool succeeded = (bool)in_lParam;
-        std::wstring outputMessage;
-        if (succeeded) 
-        {
-            outputMessage = L"Plugin Build Successfully!\n" + PluginUtils::string2wstring(buildOutputText);
-        } else 
-        {
-            outputMessage = std::wstring(L"Failed to build.\nFor more details check the output log file:\n") 
-                            + PluginUtils::string2wstring(buildOutputText);
-        }
-
-        MessageBoxW(faustWnd, outputMessage.c_str(), L"Faust2Wwise Build Result", MB_OK);
+        OnBuildCompleted(in_wParam, in_lParam);
         return TRUE;
     }
 
@@ -129,23 +114,13 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
     {
         case WM_INITDIALOG:
         {
-            AKPLATFORM::OutputDebugMsg("Faust :: INITDIALOG got called!\n");
-            faustWnd = in_hWnd;
-            editorWnd = GetDlgItem(faustWnd, IDC_CODE_EDITOR);
-            audioInputCombo = GetDlgItem(faustWnd, IDC_AUDIO_INPUT_COMBO);
-
-            audioInputList audlist = AudioInputs::getAudioInputList();
-            for (auto& [id, name] : audlist)
-            {
-                SendMessageW(audioInputCombo, CB_ADDSTRING, id, (LPARAM)name);
-            }
-            SendMessageW(audioInputCombo, CB_SETCURSEL, currAudioInputComboSelection, 0);
-            state = WM_STATE::INIT_STATE;
+            initializeEditor(in_hWnd);
             bRet=TRUE;
             break;  
         }
         case WM_COMMAND:
         {
+
             int id = LOWORD(in_wParam);
             int notify = HIWORD(in_wParam);
             
@@ -153,14 +128,26 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             {
                 if (id == IDC_BUTTON_PREVIEW)
                 {
-                    //@TODO Pass the name of the Plugin  - > create a field for defining the plugin name, or maybe a fileloader just like the online editor.
-                    SaveCodeEditorText();
                     OnPreviewButtonClicked();
                 }
-                if (id == IDC_BUTTON_BUILD)
+                else if (id == IDC_BUTTON_BUILD)
                 {
-                    SaveCodeEditorText();
                     OnBuildButtonClicked();
+                }
+                
+                else if (id == IDC_NEW_PROJECT_FILE)
+                {
+                    OnNewProjectFile();
+                }
+
+                else if (id == IDC_RENAME_PROJECT_FILE)
+                {
+                    OnRenameButtonClicked();
+                }
+
+                else if (id == IDC_DELETE_PROJECT_FILE)
+                {
+                    OnDeleteProjectFile();
                 }
             }
             else if (notify == CBN_SELCHANGE)
@@ -170,7 +157,11 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
                     int selection = (int)SendMessageW(audioInputCombo, CB_GETCURSEL, 0, 0);
                     currAudioInputComboSelection = selection;
                 }
-            } 
+                else if (id == IDC_PROJECT_FILES_COMBO)
+                {
+                    OnProjectFileSelectionChange();
+                }
+            }
             bRet = TRUE;
             break;
         }
@@ -183,22 +174,116 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
             bRet = TRUE;
             break;
         }
+        
     }
     return bRet;
+}
+
+/* 
+---------------------------------------------------------------------------------------|
+------------------------------------- UI Setup --------------------------------------- |
+---------------------------------------------------------------------------------------|
+*/
+
+void Faust_Interpreter_Test_PluginPluginGUI::initializeEditor(HWND in_hWnd)
+{
+    AKPLATFORM::OutputDebugMsg("Faust :: INITDIALOG got called!\n");
+    faustWnd = in_hWnd;
+    editorWnd = GetDlgItem(faustWnd, IDC_CODE_EDITOR);
+    audioInputCombo = GetDlgItem(faustWnd, IDC_AUDIO_INPUT_COMBO);
+    audioInputList audlist = AudioInputs::getAudioInputList();
+    for (auto& [id, name] : audlist)
+    {
+        SendMessageW(audioInputCombo, CB_ADDSTRING, id, (LPARAM)name);
+    }
+    SendMessageW(audioInputCombo, CB_SETCURSEL, currAudioInputComboSelection, 0);
+
+    projectFilesCombo = GetDlgItem(faustWnd, IDC_PROJECT_FILES_COMBO);
+    newFileButton = GetDlgItem(faustWnd, IDC_NEW_PROJECT_FILE);
+    renameFileButton = GetDlgItem(faustWnd, IDC_RENAME_PROJECT_FILE);
+    deleteFileButton = GetDlgItem(faustWnd, IDC_DELETE_PROJECT_FILE);
+
+    int pfid = 0;
+    std::vector<std::string> projectFiles = fileManager.getProjectFiles();
+    if (projectFiles.size() != 0)
+    {
+        for (std::string& name : projectFiles)
+        {
+            std::wstring wname = PluginUtils::string2wstring(name);
+            SendMessageW(projectFilesCombo, CB_ADDSTRING, pfid++, (LPARAM)wname.c_str());
+        }
+        //set default project file selection. 
+        int defaultProjectFile = 0; 
+        SendMessage(projectFilesCombo, CB_SETCURSEL, defaultProjectFile, 0);
+        currentFileWorkingOn = PluginUtils::string2wstring(projectFiles[defaultProjectFile]); 
+    }
+
+    // for hovering
+    hToolTip = CreateWindowEx(
+        0, TOOLTIPS_CLASS, NULL, WS_POPUP, 0, 0, 0, 0,
+        faustWnd, 
+        NULL, 
+        GetResourceHandle(), 
+        NULL
+    );
+    AddTooltip(newFileButton,    L"Create new Faust dsp file");
+    AddTooltip(renameFileButton, L"Rename selected Faust dsp file");
+    AddTooltip(deleteFileButton, L"Delete selected Faust dsp file");
+
+    state = WM_STATE::INIT_STATE;
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::AddTooltip(HWND hTarget, const wchar_t* text)
+{
+    TOOLINFO ti = { 0 };
+    ti.cbSize = sizeof(ti);
+    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+    ti.hwnd = faustWnd;
+    ti.uId = (UINT_PTR)hTarget;
+    ti.lpszText = (LPWSTR)text;
+
+    SendMessage(hToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+}
+
+/* 
+---------------------------------------------------------------------------------------|
+---------------------------------- Re-usable code ------------------------------------ |
+---------------------------------------------------------------------------------------|
+*/
+
+ProjectFileSelection Faust_Interpreter_Test_PluginPluginGUI::getCurrentProjectFileSelection()
+{
+    int selection = (int)SendMessage(projectFilesCombo, CB_GETCURSEL, 0, 0);
+    if (selection == CB_ERR){
+        return std::make_pair(-1,L"");
+    }
+
+    wchar_t selectionName[256];
+    SendMessage(projectFilesCombo, CB_GETLBTEXT, selection, (LPARAM)selectionName);
+    return std::make_pair(selection,std::wstring(selectionName));
 }
 
 bool Faust_Interpreter_Test_PluginPluginGUI::SetCodeEditorText()
 {
     if (!editorWnd) return false;
-    
-    std::wstring text;
-    if (loadLastSavedCode())
-        text = dspCode;
-    else{
-        text = PluginUtils::string2wstring(std::string(default_entry_code));
+
+    int filesCount = (int)SendMessage(projectFilesCombo, CB_GETCOUNT, 0, 0);
+    if (!filesCount){
+        dspCode.clear();
+    } else {
+
+        // get the current project file
+        auto [option, filename] = getCurrentProjectFileSelection();
+
+        if (!fileManager.load(PluginUtils::wstring2string(filename), dspCode))
+        {
+            std::wstring message = L"Can't load file " + filename; 
+            ShowSimpleWindow(message.c_str(),L"Error");
+        }
     }
-    SetWindowTextW(editorWnd, text.c_str());
+    SetWindowTextW(editorWnd, dspCode.c_str());
     return true;
+
 }
 
 bool Faust_Interpreter_Test_PluginPluginGUI::SaveCodeEditorText()
@@ -207,23 +292,247 @@ bool Faust_Interpreter_Test_PluginPluginGUI::SaveCodeEditorText()
     if (len <= 0)
         return false;
 
+    // set the dspCode with the existing code written on the editor.
     std::wstring buffer(len, L'\0');
     GetWindowTextW(editorWnd, &buffer[0], len + 1);
-
     // ensure null-termination and trim
     buffer.resize(wcslen(buffer.c_str()));
-
     dspCode = buffer;
 
-    saveCurrentCodeState();
+    std::string dspName = PluginUtils::wstring2string(currentFileWorkingOn);
+
+    fileManager.writeFile(dspName, dspCode);
 
     return true;
 }
+
+void Faust_Interpreter_Test_PluginPluginGUI::ShowSimpleWindow(LPCWSTR text, LPCWSTR title)
+{
+    MessageBoxW(faustWnd, text, title , MB_OK);
+}
+
+/* 
+---------------------------------------------------------------------------------------|
+---------------------------------- Event Handlers ------------------------------------ |
+---------------------------------------------------------------------------------------|
+*/
+
+void Faust_Interpreter_Test_PluginPluginGUI::OnBuildCompleted(WPARAM in_wParam, LPARAM in_lParam)
+{
+    EnableWindow((HWND)in_wParam, TRUE); // re-enable build button after completion
+
+    bool succeeded = (bool)in_lParam;
+    std::wstring outputMessage;
+    if (succeeded) 
+    {
+        outputMessage = L"Plugin Build Successfully!\n" + PluginUtils::string2wstring(buildOutputText);
+    } else 
+    {
+        outputMessage = std::wstring(L"Failed to build.\nFor more details check the output log file:\n") 
+                        + PluginUtils::string2wstring(buildOutputText);
+    }
+
+    MessageBoxW(faustWnd, outputMessage.c_str(), L"Faust2Wwise Build Result", MB_OK);
+
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::OnDeleteProjectFile()
+{
+    int filesCount = (int)SendMessage(projectFilesCombo, CB_GETCOUNT, 0, 0);
+    if (!filesCount)
+    {
+       ShowSimpleWindow(L"Can 't delete no existent file.",L"Warning");
+    }
+    else
+    {
+
+        auto [sel,deletedName] = getCurrentProjectFileSelection();
+
+        // delete the projectFile from the combo
+        SendMessage(projectFilesCombo, CB_DELETESTRING, sel, 0);
+
+        // update projectFile combo
+        int count = (int)SendMessage(projectFilesCombo, CB_GETCOUNT, 0, 0);
+        if (count > 0)
+        {
+            int newSel = count-1;
+            SendMessage(projectFilesCombo, CB_SETCURSEL, newSel, 0);
+            // update currentFileWorkingOn
+            wchar_t buffer[256];
+            SendMessage(projectFilesCombo, CB_GETLBTEXT, newSel, (LPARAM)buffer);
+            currentFileWorkingOn = buffer;
+        }
+
+        fileManager.remove(PluginUtils::wstring2string(deletedName));
+    }
+
+    // update code editor
+    SetCodeEditorText();
+}
+
+bool Faust_Interpreter_Test_PluginPluginGUI::OnRenameAccepted(wchar_t *newName)
+{
+    // get the oldName
+    auto [sel, oldName] = getCurrentProjectFileSelection();
+
+    std::string oldNameStr = PluginUtils::wstring2string(oldName);
+    std::string newNameStr = PluginUtils::wstring2string(std::wstring(newName));                    
+
+    if (fileManager.rename(oldNameStr, newNameStr))
+    {
+        // 1) rename the comboBox item by:
+        // ..deleting the old item..
+        SendMessage(projectFilesCombo, CB_DELETESTRING, sel, 0);
+        // ..inserting the new item at the same index ..
+        SendMessage(projectFilesCombo, CB_INSERTSTRING, sel, (LPARAM)newName);
+        // .. and selecting the newly inserted item.
+        SendMessage(projectFilesCombo, CB_SETCURSEL, sel, 0);
+        // .. + update the currentFileWorkingOn that keeps track of the current selection
+        currentFileWorkingOn = std::wstring(newName);
+
+        return true;
+    }
+        
+    return false;
+}
+
+LRESULT CALLBACK Faust_Interpreter_Test_PluginPluginGUI::onRenameWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_COMMAND:
+        if (LOWORD(wParam) == RENAME_CANCEL) // OK or Cancel
+        {
+            DestroyWindow(hwnd);
+            return 0;
+        }
+        else if (LOWORD(wParam) == RENAME_OK)
+        {
+            auto* self = (Faust_Interpreter_Test_PluginPluginGUI*)
+            GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            if (self)
+            {
+                // read the newName
+                HWND hEdit = GetDlgItem(hwnd, RENAME_EDIT);
+                wchar_t newName[256];
+                GetWindowTextW(hEdit, newName, 256);
+
+                if (wcslen(newName) != 0) // if the text is not empty, and renamed successfully
+                {
+                    if (!self->OnRenameAccepted(newName))
+                    {
+                        // unable to rename..
+                    }
+                    DestroyWindow(hwnd);
+                    break;
+                }
+                // else do nothing. Wait for the user to fill up the text.
+            }
+        }
+        break;
+
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return 0;
+    }
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::OnRenameButtonClicked()
+{
+    int filesCount = (int)SendMessage(projectFilesCombo, CB_GETCOUNT, 0, 0);
+    if (!filesCount)
+    {
+       ShowSimpleWindow(L"Can 't rename no existent file.",L"Warning");
+       return;
+    }
+
+    HINSTANCE hInst = GetResourceHandle();
+
+    // Register window class once
+    static bool registered = false;
+    if (!registered)
+    {
+        WNDCLASSW wc = {};
+        wc.lpfnWndProc = onRenameWinProc;
+        wc.hInstance = hInst;
+        wc.lpszClassName = L"PopupWinClass";
+        RegisterClassW(&wc);
+        registered = true;
+    }
+
+    auto [sel,pf] = getCurrentProjectFileSelection();
+    std::wstring title = L"Rename " + pf;
+
+    HWND hPopup = CreateWindowExW(
+        0, L"PopupWinClass", title.c_str(),
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+        400, 300, 300, 150,
+        faustWnd, nullptr, hInst, nullptr);
+
+    CreateWindowExW(
+        WS_EX_CLIENTEDGE, L"EDIT", L"",
+        WS_CHILD | WS_VISIBLE,
+        20, 30, 240, 25,
+        hPopup, (HMENU)RENAME_EDIT, hInst, nullptr);
+
+    CreateWindowExW(
+        0, L"BUTTON", L"OK",
+        WS_CHILD | WS_VISIBLE,
+        40, 70, 80, 25,
+        hPopup, (HMENU)RENAME_OK, hInst, nullptr);
+
+    CreateWindowExW(
+        0, L"BUTTON", L"Cancel",
+        WS_CHILD | WS_VISIBLE,
+        140, 70, 80, 25,
+        hPopup, (HMENU)RENAME_CANCEL, hInst, nullptr);
+
+    // pass the pointer to the class (this) to the hPopup window to allow calling of OnRenameAccepted when user presses ok.
+    SetWindowLongPtr(hPopup, GWLP_USERDATA, (LONG_PTR)this);
+
+    ShowWindow(hPopup, SW_SHOW);
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::OnNewProjectFile()
+{
+    // save code
+    SaveCodeEditorText(); // true for storing prev code on its file.
+    
+    std::string newName;
+    fileManager.create(newName);
+    std::wstring newPluginName = PluginUtils::string2wstring(newName);
+    int idx = (int)SendMessage(projectFilesCombo, CB_ADDSTRING, 0, (LPARAM)newPluginName.c_str());
+    SendMessage(projectFilesCombo, CB_SETCURSEL, idx, 0);   
+    currentFileWorkingOn = newPluginName;
+    SetCodeEditorText();
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::OnProjectFileSelectionChange()
+{
+    int sel = (int)SendMessage(projectFilesCombo, CB_GETCURSEL, 0, 0);
+    if (sel != CB_ERR)
+    {
+        SaveCodeEditorText();
+        wchar_t buffer[256];
+        SendMessage(projectFilesCombo, CB_GETLBTEXT, sel, (LPARAM)buffer);
+        currentFileWorkingOn = buffer;
+        SetCodeEditorText();
+    }
+}
+
+/* 
+---------------------------------------------------------------------------------------|
+----------------------------- Async Build and Preview -------------------------------- |
+---------------------------------------------------------------------------------------|
+*/
 
 void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
 {   
     // Important: this function runs asynchronously.
     
+    SaveCodeEditorText();
+
     PluginState pluginState = faustPluginLoader.getPluginState();
     if ( pluginState != PluginState::READY)
     {
@@ -248,8 +557,11 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
 
                 // verify that params are obtained...
                 if (parameters.empty())
-                {
-                    ShowEmptyParametersWindow(PluginUtils::string2wstring( cfg.plugin_name ).c_str());
+                {                    
+                    ShowSimpleWindow( 
+                        L"The DSP code does not define any parameters. Simply press \'Play\' to start playback", 
+                        PluginUtils::string2wstring( cfg.plugin_name ).c_str()
+                    );
 
                     while(pluginState==PluginState::PLUGIN_SET || pluginState==PluginState::READY)
                     {
@@ -293,6 +605,8 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
 
 void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
     
+    SaveCodeEditorText();
+
     HWND buildButton = GetDlgItem(faustWnd, IDC_BUTTON_BUILD);
     EnableWindow(buildButton, FALSE);   // disable build button...
 
@@ -313,69 +627,6 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
 
     }).detach();
 
-}
-
-void Faust_Interpreter_Test_PluginPluginGUI::ShowEmptyParametersWindow(LPCWSTR pluginName)
-{
-    MessageBoxW(faustWnd, L"The DSP code does not define any parameters. Simply press \'Play\' to start playback", pluginName , MB_OK | MB_ICONINFORMATION);
-}
-
-bool Faust_Interpreter_Test_PluginPluginGUI::loadLastSavedCode()
-{
-
-    FILE* file = _wfopen(codePath.c_str(), L"rb");  // binary mode to preserve UTF-16 encoding
-    if (!file) return false;
-
-    // Get file size
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    if (size % sizeof(wchar_t) != 0 || size <= 0) {
-        fclose(file);
-        return false;
-    }
-
-    // Read file into buffer
-    size_t wcharCount = size / sizeof(wchar_t);
-    std::wstring buffer(wcharCount, L'\0');
-
-    fread(&buffer[0], sizeof(wchar_t), wcharCount, file);
-    fclose(file);
-
-    dspCode = buffer;
-    return true;
-}
-
-bool Faust_Interpreter_Test_PluginPluginGUI::saveCurrentCodeState()
-{
-
-    FILE* file = _wfopen(codePath.c_str(), L"wb");  // binary mode to preserve encoding
-    if (!file) return false;
-
-    fwrite(dspCode.c_str(), sizeof(wchar_t), dspCode.size(), file);
-    fclose(file);
-    return true;
-}
-
-void Faust_Interpreter_Test_PluginPluginGUI::debugPrint(std::wstring text, size_t len)
-{
-    // Output debug using narrow version just for logging
-    std::string narrowDebug;
-    {
-        int required = WideCharToMultiByte(CP_UTF8, 0, text.c_str(), -1, nullptr, 0, nullptr, nullptr);
-        if (required > 0) {
-            narrowDebug.resize(required - 1); // exclude null terminator
-            WideCharToMultiByte(CP_UTF8, 0, text.c_str(), -1, &narrowDebug[0], required, nullptr, nullptr);
-        }
-    }
-
-    char output[512];
-    snprintf(output, sizeof(output),
-        "Faust :: text debug print (len=%d) = %s\n",
-        len, narrowDebug.c_str());
-
-    AKPLATFORM::OutputDebugMsg(output);
 }
 
 AK_ADD_PLUGIN_CLASS_TO_CONTAINER(

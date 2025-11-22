@@ -22,6 +22,9 @@ namespace PluginUtils{
     std::wstring string2wstring(const std::string);
 
     std::string parsePluginConfiguration(const std::string&, const int numLines = 7);
+
+    bool store_utf16_file(const std::string& path, const std::wstring& buffer);
+    bool load_utf16_file(const std::string& path, std::wstring& buffer);
 }
 
 #endif
