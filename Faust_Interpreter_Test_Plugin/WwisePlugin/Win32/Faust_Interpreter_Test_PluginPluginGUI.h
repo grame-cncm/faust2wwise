@@ -28,6 +28,9 @@ the specific language governing permissions and limitations under the License.
 #include "../Faust_Interpreter_Test_PluginPlugin.h"
 #include "plugin_loader.h"
 #include "PluginTemplate/UI/plugin_window.h"
+#include "ProjectFiles/Manager.h"
+
+typedef std::pair<int,std::wstring> ProjectFileSelection;
 
 enum WM_STATE{
     INIT_STATE=1,
@@ -59,32 +62,57 @@ public:
         WPARAM in_wParam,
         LPARAM in_lParam,
         LRESULT& out_lResult) override;
+    
+    bool OnRenameAccepted(wchar_t*); // public, cause it is called by a this-> pointer from within a static function.
 
 private:
 
-    HWND faustWnd,editorWnd,audioInputCombo;
-    WM_STATE state;
-
+    HWND faustWnd,
+        editorWnd,
+        audioInputCombo,
+        projectFilesCombo,
+        newFileButton, 
+        renameFileButton,
+        deleteFileButton ,
+        renameEdit,
+        hToolTip;
+    
     // HINT: PluginLoader is a singleton.
     PluginLoader& faustPluginLoader = PluginLoader::getInstance(); 
     PluginWindow* pluginWindow;
+    ProjectFilesManager fileManager;
 
-    std::wstring entry_code;
     std::wstring dspCode;
-    std::wstring codePath;
-
-    int currAudioInputComboSelection;
     
+    // used to store the state of specific buttons
+    WM_STATE state; // used to set the code editor after the plugin initializations is completed.
+    int currAudioInputComboSelection;
+    std::wstring currentFileWorkingOn;
+    
+    // used for async building of plugin 
+    UINT UnqBuildCompleteWndMsg;
+    std::string buildOutputText;        
+
+    // UI setup
+    void initializeEditor(HWND);
+    void AddTooltip(HWND, const wchar_t*);
+
+    // Re-usable code
+    ProjectFileSelection getCurrentProjectFileSelection();
     bool SetCodeEditorText(); 
     bool SaveCodeEditorText();
+    void ShowSimpleWindow(LPCWSTR, LPCWSTR);
+    
+    // Event handlers
+    void OnBuildCompleted(WPARAM, LPARAM);
+    void OnDeleteProjectFile();
+    void OnRenameButtonClicked();
+    static LRESULT CALLBACK onRenameWinProc(HWND, UINT, WPARAM, LPARAM);
+    void OnNewProjectFile();
+    void OnProjectFileSelectionChange();
+
+    // Async Build and Preview
     void OnPreviewButtonClicked();
-    void OnBuildButtonClicked();
-    UINT UnqBuildCompleteWndMsg;
-    std::string buildOutputText;
-    void ShowEmptyParametersWindow(LPCWSTR);
+    void OnBuildButtonClicked();    // @TODO: requires admin priviledges. Check if can be given on runtime for this specific operation.
 
-    bool loadLastSavedCode();
-    bool saveCurrentCodeState();
-
-    void debugPrint(std::wstring, size_t);
 };

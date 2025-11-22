@@ -13,6 +13,12 @@
 #include <locale>
 #include <codecvt>
 
+
+// for file utils
+#include <vector>
+#include <cstdio>
+
+
 namespace PluginUtils
 {
 
@@ -116,6 +122,40 @@ namespace PluginUtils
             out << l << '\n';
 
         return out.str();
+    }
+
+    bool load_utf16_file(const std::string& path, std::wstring& buffer)
+    {
+        std::ifstream file(path, std::ios::binary);
+        if (!file) return false;
+
+        // Read raw bytes
+        std::vector<char> bytes(
+            (std::istreambuf_iterator<char>(file)),
+            std::istreambuf_iterator<char>()
+        );
+
+        // Must be even-sized (UTF-16)
+        if (bytes.size() % 2 != 0)
+            return false;
+
+        buffer.resize(bytes.size() / 2);
+        memcpy(buffer.data(), bytes.data(), bytes.size());
+
+        return true;
+    }
+
+    bool store_utf16_file(const std::string& path, const std::wstring& buffer)
+    {
+        std::ofstream file(path, std::ios::binary | std::ios::trunc);
+        if (!file) return false;
+
+        file.write(
+            reinterpret_cast<const char*>(buffer.data()),
+            buffer.size() * sizeof(wchar_t)
+        );
+
+        return true;
     }
 
 }

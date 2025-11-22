@@ -75,7 +75,6 @@ Plugin.sdk.static.defines = -- https://github.com/premake/premake-core/wiki/defi
 Plugin.sdk.shared.includedirs =
 {
     "../FaustRuntime",
-    "../external/nlohmann/json/include",
     "C:/Program Files/Faust/include",
 }
 Plugin.sdk.shared.files =
@@ -102,7 +101,6 @@ Plugin.sdk.shared.defines =
 Plugin.authoring.includedirs =
 {
     "../FaustRuntime",
-    "../external/nlohmann/json/include",
     "C:/Program Files/Faust/include",
 }
 Plugin.authoring.files =
