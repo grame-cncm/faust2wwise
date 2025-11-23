@@ -561,11 +561,13 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnExportClicked()
 
         // export cpp
         std::string cppfilePath = storeDir + '/' + filename + ".cpp";
+        bool doublePrecision = (SendMessage(GetDlgItem(faustWnd,IDC_CHECK_DOUBLE_PRECISION),BM_GETCHECK, 0, 0) == BST_CHECKED);
         std::string errorMessage;
         bool cppExported = faustPluginLoader.exportCPP(
             filename,
             PluginUtils::wstring2string(dspCode),
             cppfilePath,
+            doublePrecision,
             errorMessage
         );
 
@@ -750,8 +752,10 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
     {        
         // compile using faust2wwise implementation..
         auto [id,pluginName] = getCurrentProjectFileSelection();
+        bool doublePrecision = (SendMessage(GetDlgItem(faustWnd,IDC_CHECK_DOUBLE_PRECISION),BM_GETCHECK, 0, 0) == BST_CHECKED);
         bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(pluginName), 
                                                 PluginUtils::wstring2string(dspCode), 
+                                                doublePrecision,
                                                 buildOutputText);
         
         // temp log message

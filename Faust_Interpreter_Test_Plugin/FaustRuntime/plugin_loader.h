@@ -38,10 +38,10 @@ public:
     void resetPlugin();
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     
-    bool buildPlugin(const std::string&, const std::string&, std::string&);
+    bool buildPlugin(const std::string&, const std::string&, bool, std::string&);
     std::string& getExportPath() {   return cfg.path.exportPath;  }
 
-    bool exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage);
+    bool exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, bool doublePrecision, std::string& errorMessage);
 
 private:
     /*! @brief Class constructor.

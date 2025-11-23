@@ -42,16 +42,11 @@ bool InterpreterWrapper::compileDSP(const std::string dspCode, const PluginConfi
         factory = nullptr;
     }
 
-    // directly create a new dsp factory to exploit its caching ability 
-    // const std::string &name_app, const std::string &dsp_content, int argc, const char *argv[], std::string &error_msg)
-    // TODO: fix compilation options
-    // Define compilation options (none for now, but could add e.g. "-vec")
-    //  int argc = 0;
-    //  const char** argv = nullptr;
-    const char* argv[] = { 
+    std::vector<const char*> args { 
         "-I", cfg.path.faust_dspdir.c_str(),
     };
-    int argc = 2;
+    int argc = args.size();
+    const char** argv = args.data();
 
     std::string errorMessage;
     factory = createInterpreterDSPFactoryFromString(
@@ -163,18 +158,26 @@ void InterpreterWrapper::callback(int bufferSize, FAUSTFLOAT** inputs, FAUSTFLOA
     mdsp->compute(bufferSize, inputs, outputs);
 }
 
-bool InterpreterWrapper::exportCPP(const std::string& faust_dspdir, const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage)
+bool InterpreterWrapper::exportCPP(
+    const std::string& faust_dspdir, 
+    const std::string &filename, 
+    const std::string& dspCode, 
+    const std::string& filepath, 
+    bool doublePrecision,
+    std::string& errorMessage)
 {
 
     interpreter_dsp_factory* fct;
 
-    const char* argv[] = { 
+    std::vector<const char*> args { 
         "-I", faust_dspdir.c_str(),
         "-lang", "cpp", 
         "-json"
     };
-
-    int argc = 2;
+    if (doublePrecision)
+        args.push_back("-double");
+    int argc = args.size();
+    const char** argv = args.data();
 
     fct = createInterpreterDSPFactoryFromString(
         filename,

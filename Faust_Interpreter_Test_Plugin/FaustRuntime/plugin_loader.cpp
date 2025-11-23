@@ -125,7 +125,7 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 si
 #include <fstream>
 #include <cstdlib>
 #include <sstream>
-bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string& dspCode, std::string& outputText) {
+bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string& dspCode, bool doublePrecision, std::string& outputText) {
 
     std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath + '/' + pluginName);
 
@@ -140,7 +140,12 @@ bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string&
 
     // call faust2wwise inside the temp directory
     std::ostringstream cmd;
-    cmd << "cd /d \"" << tempDir << "\" && faust2wwise "<< pluginName << ".dsp > output.log 2>&1";
+    cmd << "cd /d \"" 
+        << tempDir 
+        << "\" && faust2wwise "
+        << pluginName << ".dsp "
+        <<((doublePrecision) ? "-double " : " ")
+        <<"> output.log 2>&1";
 
     int result = std::system(cmd.str().c_str());
 
@@ -155,7 +160,7 @@ bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string&
     return result == 0;
 }
 
-bool PluginLoader::exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage)
+bool PluginLoader::exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, bool doublePrecision, std::string& errorMessage)
 {
-   return faustInterpreter.exportCPP(cfg.path.faust_dspdir, filename, dspCode, filepath, errorMessage);
+   return faustInterpreter.exportCPP(cfg.path.faust_dspdir, filename, dspCode, filepath, doublePrecision, errorMessage);
 }
