@@ -1,8 +1,8 @@
 #ifndef PLUGIN_CONFIG_H
 #define PLUGIN_CONFIG_H
 
-#define STORAGE_DIRNAME "_f2wTemp_"
-#define DEFAULT_NAME_APP "Faust2WwisePlugin"
+#define STORAGE_DIRNAME "_faust"
+#define DEFAULT_NAME_APP "Faust Interpreter Plugin"
 
 #define PREVIEW_WINDOW_WIDTH 640
 #define PREVIEW_WINDOW_HEIGHT 480
