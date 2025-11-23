@@ -62,8 +62,6 @@ public:
         WPARAM in_wParam,
         LPARAM in_lParam,
         LRESULT& out_lResult) override;
-    
-    bool OnRenameAccepted(wchar_t*); // public, cause it is called by a this-> pointer from within a static function.
 
 private:
 
@@ -107,6 +105,7 @@ private:
     void OnBuildCompleted(WPARAM, LPARAM);
     void OnDeleteProjectFile();
     void OnRenameButtonClicked();
+    bool OnRenameAccepted(wchar_t*);
     static LRESULT CALLBACK onRenameWinProc(HWND, UINT, WPARAM, LPARAM);
     void OnNewProjectFile();
     void OnProjectFileSelectionChange();

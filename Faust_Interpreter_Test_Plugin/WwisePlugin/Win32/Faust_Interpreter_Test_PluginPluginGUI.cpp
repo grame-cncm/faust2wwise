@@ -419,7 +419,14 @@ LRESULT CALLBACK Faust_Interpreter_Test_PluginPluginGUI::onRenameWinProc(HWND hw
 
                 if (wcslen(newName) != 0) // if the text is not empty, and renamed successfully
                 {
-                    if (!self->OnRenameAccepted(newName))
+                    std::string newNameStr = PluginUtils::wstring2string(std::wstring(newName));
+                    if (!self->fileManager.pfNameUnique(newNameStr))
+                    {
+                        std::wstring message = newName;
+                        message += L" already exists";
+                        self->ShowSimpleWindow(message.c_str(), L"Aborting renaming");
+                    }
+                    else if (!self->OnRenameAccepted(newName))
                     {
                         // unable to rename..
                     }
