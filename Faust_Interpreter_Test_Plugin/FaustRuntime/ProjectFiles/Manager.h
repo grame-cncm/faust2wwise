@@ -22,6 +22,8 @@ public:
 
     bool remove(const std::string&);
 
+    bool pfNameUnique(const std::string&);
+
 private:
 
     std::string projectFilesDir;

@@ -145,6 +145,10 @@ bool ProjectFilesManager::remove(const std::string& name)
     return false;
 }
 
+bool ProjectFilesManager::pfNameUnique(const std::string& name){
+    return (project_files.find(name) == project_files.end());
+}
+
 void ProjectFilesManager::scanProjectFileDir()
 {
     // only the first time , when the dir is not yet created.
