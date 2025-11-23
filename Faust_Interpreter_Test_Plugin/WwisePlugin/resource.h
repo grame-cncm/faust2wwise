@@ -15,6 +15,7 @@
 #define RENAME_CANCEL           1011
 #define IDC_BUTTON_EXPORT       1012
 #define IDC_CHECK_SAVE_DSP      1013
+#define IDC_BUTTON_DOCS         1014
 
 #endif  // RESOURCE_H
 

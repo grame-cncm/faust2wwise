@@ -34,6 +34,8 @@ the specific language governing permissions and limitations under the License.
 #include <sstream>
 #include <thread>
 
+#define FAUST_DOCS_PAGE L"https://faustdoc.grame.fr/manual/syntax/"
+
 AK_WWISE_PLUGIN_GUI_WINDOWS_BEGIN_POPULATE_TABLE(PropertyTable)
 AK_WWISE_PLUGIN_GUI_WINDOWS_END_POPULATE_TABLE()
 
@@ -152,6 +154,10 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
                 else if (id == IDC_BUTTON_EXPORT)
                 {
                     OnExportClicked();
+                }
+                else if (id == IDC_BUTTON_DOCS)
+                {
+                    onDocsClicked();
                 }
             }
             else if (notify == CBN_SELCHANGE)
@@ -637,6 +643,18 @@ int Faust_Interpreter_Test_PluginPluginGUI::AskUserForDirectory(std::wstring& di
     pfd->Release();
 
     return 0;
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::onDocsClicked()
+{
+    ShellExecuteW(
+        faustWnd,
+        L"open",
+        std::wstring(FAUST_DOCS_PAGE).c_str(),
+        NULL,
+        NULL,
+        SW_SHOWNORMAL
+    );
 }
 
 /* 

@@ -111,6 +111,7 @@ private:
     void OnProjectFileSelectionChange();
     void OnExportClicked();
     int AskUserForDirectory(std::wstring&);
+    void onDocsClicked();
 
     // Async Build and Preview
     void OnPreviewButtonClicked();
