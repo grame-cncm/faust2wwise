@@ -154,3 +154,8 @@ bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string&
     
     return result == 0;
 }
+
+bool PluginLoader::exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage)
+{
+   return faustInterpreter.exportCPP(cfg.path.faust_dspdir, filename, dspCode, filepath, errorMessage);
+}

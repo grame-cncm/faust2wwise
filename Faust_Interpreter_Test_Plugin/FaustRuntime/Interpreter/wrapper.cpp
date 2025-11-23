@@ -162,3 +162,37 @@ void InterpreterWrapper::callback(int bufferSize, FAUSTFLOAT** inputs, FAUSTFLOA
 {
     mdsp->compute(bufferSize, inputs, outputs);
 }
+
+bool InterpreterWrapper::exportCPP(const std::string& faust_dspdir, const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage)
+{
+
+    interpreter_dsp_factory* fct;
+
+    const char* argv[] = { 
+        "-I", faust_dspdir.c_str(),
+        "-lang", "cpp", 
+        "-json"
+    };
+
+    int argc = 2;
+
+    fct = createInterpreterDSPFactoryFromString(
+        filename,
+        dspCode,
+        argc,
+        argv,
+        errorMessage
+    );
+
+    if (!fct) 
+    {
+        std::cerr << "Faust compilation failed : " << errorMessage << std::endl;
+        return false;
+    }
+
+    writeInterpreterDSPFactoryToBitcodeFile(fct, filepath);
+    
+    deleteInterpreterDSPFactory(fct);
+
+    return true;
+}

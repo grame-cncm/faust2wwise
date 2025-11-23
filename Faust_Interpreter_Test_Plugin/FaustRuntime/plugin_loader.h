@@ -41,6 +41,8 @@ public:
     bool buildPlugin(const std::string&, const std::string&, std::string&);
     std::string& getExportPath() {   return cfg.path.exportPath;  }
 
+    bool exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage);
+
 private:
     /*! @brief Class constructor.
     */
