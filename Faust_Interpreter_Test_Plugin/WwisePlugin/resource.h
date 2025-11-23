@@ -13,6 +13,8 @@
 #define RENAME_EDIT             1009
 #define RENAME_OK               1010
 #define RENAME_CANCEL           1011
+#define IDC_BUTTON_EXPORT       1012
+#define IDC_CHECK_SAVE_DSP      1013
 
 #endif  // RESOURCE_H
 

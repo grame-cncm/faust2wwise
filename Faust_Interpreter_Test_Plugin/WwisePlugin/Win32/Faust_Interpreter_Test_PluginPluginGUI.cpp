@@ -149,6 +149,10 @@ bool Faust_Interpreter_Test_PluginPluginGUI::WindowProc(
                 {
                     OnDeleteProjectFile();
                 }
+                else if (id == IDC_BUTTON_EXPORT)
+                {
+                    OnExportClicked();
+                }
             }
             else if (notify == CBN_SELCHANGE)
             {
@@ -504,7 +508,7 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnRenameButtonClicked()
 void Faust_Interpreter_Test_PluginPluginGUI::OnNewProjectFile()
 {
     // save code
-    SaveCodeEditorText(); // true for storing prev code on its file.
+    SaveCodeEditorText();
     
     std::string newName;
     fileManager.create(newName);
@@ -526,6 +530,113 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnProjectFileSelectionChange()
         currentFileWorkingOn = buffer;
         SetCodeEditorText();
     }
+}
+
+void Faust_Interpreter_Test_PluginPluginGUI::OnExportClicked()
+{
+    SaveCodeEditorText();
+    
+    // get the checkbox value
+    bool saveDSP = (SendMessage(GetDlgItem(faustWnd, IDC_CHECK_SAVE_DSP),BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+    // prompt the user to choose a dir
+    std::wstring userDir;
+    int res = AskUserForDirectory(userDir);
+
+    if (res==1 || userDir.empty()) {
+        ShowSimpleWindow(L"Can 't obtain the export directory to store the files.", L"Export canceled");
+        return;
+    }
+    else if (res == 0) // store file(s) on SUCCES res
+    {
+        std::string filename = PluginUtils::wstring2string(currentFileWorkingOn);
+        std::string storeDir = PluginUtils::wstring2string(userDir) + '/' + filename;
+        std::filesystem::create_directory( std::filesystem::path(storeDir));
+
+        // export cpp
+        std::string cppfilePath = storeDir + '/' + filename + ".cpp";
+        std::string errorMessage;
+        bool cppExported = faustPluginLoader.exportCPP(
+            filename,
+            PluginUtils::wstring2string(dspCode),
+            cppfilePath,
+            errorMessage
+        );
+
+        // export dsp
+        bool dspExported=true;
+        if (saveDSP) 
+        {
+            std::string dspfilePath = storeDir + '/' + filename + ".dsp";
+            dspExported = PluginUtils::store_utf16_file(dspfilePath, dspCode);
+        }
+
+        // show windows
+        std::string msg, title;
+
+        if (!cppExported) {
+            msg = "Could not export cpp file.\n" + errorMessage;
+            title = "Export error";
+        } 
+        if (saveDSP && !dspExported) {
+            msg+="\nCould not export dsp file.";
+            title = "Export error";
+        } 
+        if (cppExported && dspExported) 
+        {
+            title = "Export success";
+            msg = "Successfully exported cpp file";
+            if (saveDSP) {
+                msg += "\nSuccessfully exported dsp file.";
+            }
+            std::string dirMsg = "\nOutput dir : " + storeDir; 
+            msg+=dirMsg;
+        }
+        ShowSimpleWindow(PluginUtils::string2wstring(msg).c_str(), PluginUtils::string2wstring(title).c_str());
+    }
+}
+
+int Faust_Interpreter_Test_PluginPluginGUI::AskUserForDirectory(std::wstring& directory)
+{
+    IFileDialog* pfd = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
+                                  IID_PPV_ARGS(&pfd));
+
+    if (FAILED(hr))
+    {
+        return 1;
+    }
+    
+    DWORD options;
+    pfd->GetOptions(&options);
+    pfd->SetOptions(options | FOS_PICKFOLDERS);
+
+    hr = pfd->Show(faustWnd);   // parent window
+    if (FAILED(hr)) {
+        pfd->Release();
+        return 2; // cancelled
+    }
+
+    IShellItem* pItem = nullptr;
+    hr = pfd->GetResult(&pItem);
+    if (FAILED(hr)) {
+        pfd->Release();
+        return 1; // failed
+    }
+
+    PWSTR path = nullptr;
+    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &path);
+
+    if (SUCCEEDED(hr))
+    {
+        directory = path;
+    }
+    
+    CoTaskMemFree(path);
+    pItem->Release();
+    pfd->Release();
+
+    return 0;
 }
 
 /* 

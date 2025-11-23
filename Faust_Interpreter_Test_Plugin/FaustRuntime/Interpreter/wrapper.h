@@ -36,6 +36,8 @@ public:
 
     FAUSTFLOAT getParameter(const std::string& name);
 
+    bool exportCPP(const std::string& faust_dspdir, const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage);
+
 private:
 
     interpreter_dsp_factory* factory;

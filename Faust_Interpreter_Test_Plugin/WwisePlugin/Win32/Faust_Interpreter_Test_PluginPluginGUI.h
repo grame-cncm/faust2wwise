@@ -109,6 +109,8 @@ private:
     static LRESULT CALLBACK onRenameWinProc(HWND, UINT, WPARAM, LPARAM);
     void OnNewProjectFile();
     void OnProjectFileSelectionChange();
+    void OnExportClicked();
+    int AskUserForDirectory(std::wstring&);
 
     // Async Build and Preview
     void OnPreviewButtonClicked();
