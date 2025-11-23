@@ -38,7 +38,7 @@ public:
     void resetPlugin();
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     
-    bool buildPlugin(const std::string&, std::string&);
+    bool buildPlugin(const std::string&, const std::string&, std::string&);
     std::string& getExportPath() {   return cfg.path.exportPath;  }
 
 private:

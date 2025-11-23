@@ -125,12 +125,12 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 si
 #include <fstream>
 #include <cstdlib>
 #include <sstream>
-bool PluginLoader::buildPlugin(const std::string& dspCode, std::string& outputText) {
+bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string& dspCode, std::string& outputText) {
 
-    std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath);
+    std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath + '/' + pluginName);
 
     // write dspCode into the example.dsp file. Name of plugin will be set automatically via declare.
-    std::filesystem::path dspPath = std::filesystem::path(tempDir + "/example.dsp");
+    std::filesystem::path dspPath = std::filesystem::path(tempDir + '/' + pluginName +".dsp");
     std::ofstream outFile(dspPath);
     if (!outFile.is_open()) {
         return false;
@@ -140,7 +140,7 @@ bool PluginLoader::buildPlugin(const std::string& dspCode, std::string& outputTe
 
     // call faust2wwise inside the temp directory
     std::ostringstream cmd;
-    cmd << "cd /d \"" << tempDir << "\" && faust2wwise example.dsp > output.log 2>&1";
+    cmd << "cd /d \"" << tempDir << "\" && faust2wwise "<< pluginName << ".dsp > output.log 2>&1";
 
     int result = std::system(cmd.str().c_str());
 
