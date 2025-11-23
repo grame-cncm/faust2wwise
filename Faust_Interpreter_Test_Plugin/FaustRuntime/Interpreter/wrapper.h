@@ -31,12 +31,12 @@ public:
     template <typename T>
     void setParameter(const std::string name, T value)
     {
-    mapui->setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
+        mapui->setParamValue(name, static_cast<FAUSTFLOAT>(value)); 
     }
 
     FAUSTFLOAT getParameter(const std::string& name);
 
-    bool exportCPP(const std::string& faust_dspdir, const std::string &filename, const std::string& dspCode, const std::string& filepath, std::string& errorMessage);
+    bool exportCPP(const std::string& faust_dspdir, const std::string &filename, const std::string& dspCode, const std::string& filepath, bool doublePrecision, std::string& errorMessage);
 
 private:
 
