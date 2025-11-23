@@ -75,7 +75,7 @@ namespace PluginUtils
         auto now_time_t = std::chrono::system_clock::to_time_t(now);
         timestamp << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
 
-        std::filesystem::path tempDirectory = std::filesystem::path( exportPath + "/faust_" + timestamp.str());
+        std::filesystem::path tempDirectory = std::filesystem::path( exportPath + "/" + timestamp.str());
 
         try {
             std::filesystem::create_directories(tempDirectory);

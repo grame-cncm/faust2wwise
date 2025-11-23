@@ -613,7 +613,10 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
     std::thread([this, buildButton]()
     {        
         // compile using faust2wwise implementation..
-        bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(dspCode), buildOutputText);
+        auto [id,pluginName] = getCurrentProjectFileSelection();
+        bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(pluginName), 
+                                                PluginUtils::wstring2string(dspCode), 
+                                                buildOutputText);
         
         // temp log message
         char dbg[256];
