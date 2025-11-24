@@ -138,26 +138,28 @@ bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string&
     outFile << dspCode;
     outFile.close();
 
-    // call faust2wwise inside the temp directory
-    std::ostringstream cmd;
-    cmd << "cd /d \"" 
-        << tempDir 
-        << "\" && faust2wwise "
-        << pluginName << ".dsp "
-        <<((doublePrecision) ? "-double " : " ")
-        <<"> output.log 2>&1";
+    // use that script to enable user to provide admin rights when running build (via faust2wwise)
+    // create a powerShell if it doesnt exist
+    std::string scriptPath = cfg.path.exportPath + "/build_faust_plugin.bat";
+    PluginUtils::createBatScript(scriptPath); // runs only the first time.
+        
+    std::wstringstream args;
+    args << L"/c \"\"" << PluginUtils::string2wstring(scriptPath)
+        << L"\" \"" << PluginUtils::string2wstring(tempDir)
+        << L"\" \"" << PluginUtils::string2wstring(pluginName)
+        << L"\" " << (doublePrecision ? 1 : 0) << L"\"";
 
-    int result = std::system(cmd.str().c_str());
-
+    bool result = PluginUtils::runElevatedScript(L"cmd.exe", args.str());
+    
     std::string logPath = tempDir + "/output.log";
-    if (result == 0)
+    if (result)
     {
         int numLines = 7; // last 7 lines contain the plugin configuration
         outputText = PluginUtils::parsePluginConfiguration(logPath, numLines);
     }
     else outputText = logPath;  // else return the path to the log file.
     
-    return result == 0;
+    return result;
 }
 
 bool PluginLoader::exportCPP(const std::string &filename, const std::string& dspCode, const std::string& filepath, bool doublePrecision, std::string& errorMessage)
