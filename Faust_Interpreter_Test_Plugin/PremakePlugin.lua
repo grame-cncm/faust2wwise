@@ -43,7 +43,6 @@ Plugin.sdk.static.includedirs = -- https://github.com/premake/premake-core/wiki/
 {
     "../FaustRuntime",
     "C:/Program Files/Faust/include",
-    "../external/nlohmann/json/include"
 }
 Plugin.sdk.static.files = -- https://github.com/premake/premake-core/wiki/files
 {

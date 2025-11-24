@@ -158,4 +158,57 @@ namespace PluginUtils
         return true;
     }
 
+    #include <windows.h>
+    #include <shellapi.h>
+    bool runElevatedScript(const std::wstring& exe,const std::wstring& args)
+    {
+        SHELLEXECUTEINFOW sei = { sizeof(sei) };
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpVerb = L"runas";        // elevation
+        sei.lpFile = exe.c_str();
+        sei.lpParameters = args.c_str();
+        sei.nShow = SW_SHOWNORMAL;
+
+        if (!ShellExecuteExW(&sei))
+            return false;
+
+        // wait to finish
+        WaitForSingleObject(sei.hProcess, INFINITE);
+        DWORD exitCode = 0;
+        GetExitCodeProcess(sei.hProcess, &exitCode);
+        CloseHandle(sei.hProcess);
+
+        return exitCode == 0;
+    }
+
+
+    void createBatScript(const std::string& scriptPath)
+    {
+        if (!std::filesystem::exists(scriptPath))
+        {
+            std::ofstream out(scriptPath);
+            out <<
+            R"(@echo off
+REM Parameters
+set "TempDir=%1"
+set "PluginName=%2"
+set "UseDouble=%3"
+
+echo Building plugin in elevated mode...
+cd /d "%TempDir%"
+
+REM Convert boolean flag into faust argument
+set "DP_FLAG="
+if "%UseDouble%"=="1" (
+    set "DP_FLAG=-double"
+)
+
+faust2wwise "%PluginName%.dsp" %DP_FLAG% > output.log 2>&1
+exit /b %ERRORLEVEL%
+            )";
+            out.close();
+        }
+    }
+
+
 }

@@ -25,6 +25,10 @@ namespace PluginUtils{
 
     bool store_utf16_file(const std::string& path, const std::wstring& buffer);
     bool load_utf16_file(const std::string& path, std::wstring& buffer);
+
+    bool runElevatedScript(const std::wstring& exe,const std::wstring& args);
+    void createBatScript(const std::string& scriptPath);
+
 }
 
 #endif
