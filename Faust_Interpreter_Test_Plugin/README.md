@@ -17,6 +17,7 @@ This project integrates the Faust IDE as a plugin directly into Wwise Authoring 
     - rename project files,
     - delete project files,
 - Double Precision support for building and exporting.
+- `in place` and `out-of-place` option for building effect plugins.
 - Admin rights handling (prompting via Windows elevation)
 - Integrated local Faust documentation
 
@@ -29,7 +30,6 @@ This project integrates the Faust IDE as a plugin directly into Wwise Authoring 
 - Fix scrolling issues in the plugin window (particularly with many parameters)
 - [x] Fix audio duration (numLoops)
     - numLoops is disabled.
-- in-place and out-of-place support via checkbox.
 - `Windows`-only support
 - integrate within `faust2wwise`
 
@@ -61,6 +61,8 @@ Selecting `Save DSP Code` also saves the source `.dsp` file to disk.
 
 The `Double Precision` option enables double-precision internal DSP computation in the exported file.
 When building, enabling double precision compiles the plugin using the same precision mode.
+
+Enabling `Out of place` makes the processing use separate input and output buffers in the Execute and compute functions.
 
 Finally, `Docs` redirects to the online Faust documentation.
 

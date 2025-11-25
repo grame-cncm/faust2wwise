@@ -17,7 +17,7 @@
 #define IDC_CHECK_SAVE_DSP          1013
 #define IDC_BUTTON_DOCS             1014
 #define IDC_CHECK_DOUBLE_PRECISION  1015
-
+#define IDC_CHECK_OUT_OF_PLACE      1016
 
 #endif  // RESOURCE_H
 

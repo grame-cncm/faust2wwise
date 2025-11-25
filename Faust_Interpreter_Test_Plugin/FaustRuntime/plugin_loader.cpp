@@ -2,6 +2,8 @@
 #include <thread>
 #include <iostream>
 
+#define BUILD_DIR "_build"
+
 PluginLoader::PluginLoader()
     : pluginState(PluginState::ZERO_STATE)
     , effectPlugin(cfg, parameters, faustInterpreter)
@@ -125,9 +127,14 @@ void PluginLoader::callback(std::vector<FAUSTFLOAT*>& outdata, const AkUInt32 si
 #include <fstream>
 #include <cstdlib>
 #include <sstream>
-bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string& dspCode, bool doublePrecision, std::string& outputText) {
+bool PluginLoader::buildPlugin(
+    const std::string& pluginName, 
+    const std::string& dspCode, 
+    bool doublePrecision, 
+    bool isOutOfPlace,
+    std::string& outputText) {
 
-    std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath + '/' + pluginName);
+    std::string tempDir = PluginUtils::createTempDir(cfg.path.exportPath + '/' + std::string(BUILD_DIR) + '/' + pluginName);
 
     // write dspCode into the example.dsp file. Name of plugin will be set automatically via declare.
     std::filesystem::path dspPath = std::filesystem::path(tempDir + '/' + pluginName +".dsp");
@@ -144,10 +151,13 @@ bool PluginLoader::buildPlugin(const std::string& pluginName, const std::string&
     PluginUtils::createBatScript(scriptPath); // runs only the first time.
         
     std::wstringstream args;
-    args << L"/c \"\"" << PluginUtils::string2wstring(scriptPath)
-        << L"\" \"" << PluginUtils::string2wstring(tempDir)
-        << L"\" \"" << PluginUtils::string2wstring(pluginName)
-        << L"\" " << (doublePrecision ? 1 : 0) << L"\"";
+    args << L"/c \"\""
+    << PluginUtils::string2wstring(scriptPath) << L"\""
+    << L" \"" << PluginUtils::string2wstring(tempDir) << L"\""
+    << L" \"" << PluginUtils::string2wstring(pluginName) << L"\""
+    << L" " << (doublePrecision ? 1 : 0)
+    << L" " << ((isOutOfPlace) ? 1 : 0)
+    << L"\"";
 
     bool result = PluginUtils::runElevatedScript(L"cmd.exe", args.str());
     

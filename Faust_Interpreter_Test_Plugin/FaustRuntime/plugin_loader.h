@@ -48,7 +48,7 @@ public:
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32);
     
     /* Function used to build plugin, calling faust2wwise behind the scenes. */
-    bool buildPlugin(const std::string&, const std::string&, bool, std::string&);
+    bool buildPlugin(const std::string&, const std::string&, bool, bool, std::string&);
     /* returns the path created ('faust_' dir) with the Wwise root directory. */
     std::string& getExportPath() {   return cfg.path.exportPath;  }
 
