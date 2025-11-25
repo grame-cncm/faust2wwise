@@ -193,6 +193,7 @@ REM Parameters
 set "TempDir=%1"
 set "PluginName=%2"
 set "UseDouble=%3"
+set "IsOutOfPlace=%4"
 
 echo Building plugin in elevated mode...
 cd /d "%TempDir%"
@@ -203,12 +204,16 @@ if "%UseDouble%"=="1" (
     set "DP_FLAG=-double"
 )
 
-faust2wwise "%PluginName%.dsp" %DP_FLAG% > output.log 2>&1
+REM Out-of-place flag (empty if not enabled)
+set "OP_FLAG="
+if "%IsOutOfPlace%"=="1" (
+    set "OP_FLAG=--out-of-place"
+)
+
+faust2wwise "%PluginName%.dsp" %DP_FLAG% %OP_FLAG% > output.log 2>&1
 exit /b %ERRORLEVEL%
             )";
             out.close();
         }
     }
-
-
 }

@@ -388,6 +388,13 @@ bool Faust_Interpreter_Test_PluginPluginGUI::OnRenameAccepted(wchar_t *newName)
     std::string oldNameStr = PluginUtils::wstring2string(oldName);
     std::string newNameStr = PluginUtils::wstring2string(std::wstring(newName));                    
 
+    // abort if contains spaces...
+    if (newNameStr.find(' ') != std::string::npos) 
+    {
+        ShowSimpleWindow(L"Spaces not allowed.", L"Aborting renaming");
+        return false;
+    }
+
     if (fileManager.rename(oldNameStr, newNameStr))
     {
         // 1) rename the comboBox item by:
@@ -760,9 +767,11 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnBuildButtonClicked(){
         // compile using faust2wwise implementation..
         auto [id,pluginName] = getCurrentProjectFileSelection();
         bool doublePrecision = (SendMessage(GetDlgItem(faustWnd,IDC_CHECK_DOUBLE_PRECISION),BM_GETCHECK, 0, 0) == BST_CHECKED);
+        bool isOutOfPlace = (SendMessage(GetDlgItem(faustWnd,IDC_CHECK_OUT_OF_PLACE),BM_GETCHECK, 0, 0) == BST_CHECKED);
         bool res = faustPluginLoader.buildPlugin(PluginUtils::wstring2string(pluginName), 
                                                 PluginUtils::wstring2string(dspCode), 
                                                 doublePrecision,
+                                                isOutOfPlace,
                                                 buildOutputText);
         
         // temp log message
