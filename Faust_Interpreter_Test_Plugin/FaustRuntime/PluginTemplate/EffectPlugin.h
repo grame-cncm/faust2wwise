@@ -11,6 +11,7 @@ public:
     void reset() override final;
     void setup() override final;
     void callback(std::vector<FAUSTFLOAT*>&, const AkUInt32) override final;
+    //sets an audio input given its ID.
     void setAudioInput(int);
     void setSampleRate(int);
 private:

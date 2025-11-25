@@ -25,18 +25,25 @@ struct SliderVal
 class PluginWindow
 {
 public:
+    /* constructor */
     PluginWindow(HWND, PluginConfiguration&, ParameterList&);
 
+    /* destructor */
     ~PluginWindow();
 
+    /* Returns if a plugin window object is created on initialization or not. */
     bool isWindowCreated();
 
+    /* Function that shows the plugin window.*/
     void Show();
 
+    /* Function that verifies that the window is still alive and IsWindow, or destroyed/unset. */
     bool isActive();
 
+    /* Function that dispatches messages to the window proc function. */
     void Update();
 
+    /* Implicit destructor.*/
     void Close();
 
 private:

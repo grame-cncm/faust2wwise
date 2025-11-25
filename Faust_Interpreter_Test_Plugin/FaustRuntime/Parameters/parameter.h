@@ -6,7 +6,7 @@
 #include <utility>
 #include <atomic>
 
-typedef std::vector<std::pair<std::string, std::string>> param_meta_items;
+// typedef std::vector<std::pair<std::string, std::string>> param_meta_items;
 struct Parameter;
 typedef std::vector<Parameter> ParameterList;
 
@@ -29,52 +29,16 @@ struct Parameter{
         int id;
     }preview;
 
-    Parameter()
-        : type("")
-        , label("")
-        , shortname("")
-        , index(-1)
-        , init(0.0)
-        , pmin(0.0)
-        , pmax(1.0)
-        , step(0.01)
-        , value {0.0f}
-    {
-        preview.id = -1;
-    }
+    // constructor
+    Parameter();
 
     // delete copying
     Parameter(const Parameter &p) = delete;
     Parameter &operator=(const Parameter &p) = delete;
 
-    Parameter(Parameter&& p) noexcept
-        : type(p.type)
-        , label(p.label)
-        , shortname(p.shortname)
-        , index(p.index)
-        , init(p.init)
-        , pmin (p.pmin)
-        , pmax (p.pmax)
-        , step (p.step)
-        , value{p.value.load()}
-    {
-        preview.id = p.preview.id;
-    }
-        
-    Parameter& operator=(Parameter&& p) noexcept
-    {
-        type = std::move(p.type);
-        label = std::move(p.label);
-        shortname = std::move(p.shortname);
-        index = p.index;
-        init = p.init;
-        pmin = p.pmin;
-        pmax = p.pmax;
-        step = p.step;
-        value.store(p.value.load());
-        preview.id = p.preview.id;
-        return *this;
-    }
+    // support move
+    Parameter(Parameter&& p) noexcept;
+    Parameter& operator=(Parameter&& p) noexcept;
 
 };
 
