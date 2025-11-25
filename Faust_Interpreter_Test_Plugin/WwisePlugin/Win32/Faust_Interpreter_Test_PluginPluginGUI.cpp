@@ -556,7 +556,7 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnExportClicked()
     std::wstring userDir;
     int res = AskUserForDirectory(userDir);
 
-    if (res==1 || userDir.empty()) {
+    if (res==1) {
         ShowSimpleWindow(L"Can 't obtain the export directory to store the files.", L"Export canceled");
         return;
     }
