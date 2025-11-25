@@ -32,7 +32,7 @@ public:
     ParameterList& getParameters()          {   return parameters;  }
     PluginState getPluginState()            {   return pluginState.load();  }
 
-    bool createPlugin(std::string&, int);
+    bool createPlugin(std::string&, int, std::string&);
     int setupAudio(int);
     void unloadPlugin();
     void resetPlugin();

@@ -34,7 +34,7 @@ void InterpreterWrapper::reset()
     }
 }
 
-bool InterpreterWrapper::compileDSP(const std::string dspCode, const PluginConfiguration &cfg)
+bool InterpreterWrapper::compileDSP(const std::string dspCode, const PluginConfiguration &cfg, std::string& errorMessage)
 {
 
     if(factory){
@@ -48,7 +48,6 @@ bool InterpreterWrapper::compileDSP(const std::string dspCode, const PluginConfi
     int argc = args.size();
     const char** argv = args.data();
 
-    std::string errorMessage;
     factory = createInterpreterDSPFactoryFromString(
         cfg.name_app,
         dspCode,
