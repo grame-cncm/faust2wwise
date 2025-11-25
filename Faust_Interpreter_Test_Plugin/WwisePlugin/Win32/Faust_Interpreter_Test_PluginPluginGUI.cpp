@@ -678,13 +678,20 @@ void Faust_Interpreter_Test_PluginPluginGUI::OnPreviewButtonClicked()
         // build plugin asynchronously
         std::thread([this]() {
                 
+                std::string errorMsg;        
                 bool pluginCreated = faustPluginLoader.createPlugin(
                     PluginUtils::wstring2string(this->dspCode),
-                    currAudioInputComboSelection
+                    currAudioInputComboSelection,
+                    errorMsg
                 );
                 
                 if (!pluginCreated)
+                {
+                    std::wstring outputMessage = std::wstring(L"Failed to compile dsp file.\nError message:\n") 
+                        + PluginUtils::string2wstring(errorMsg);
+                    ShowSimpleWindow(outputMessage.c_str(),L"Preview error");
                     return;
+                }
                     
                 // disable selection of audio input source for the effect plugins when preview.
                 EnableWindow(audioInputCombo, FALSE);

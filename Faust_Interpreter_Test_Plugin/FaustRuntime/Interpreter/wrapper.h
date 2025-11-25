@@ -18,7 +18,7 @@ public:
 
     void reset();
 
-    bool compileDSP(const std::string dspCode, const PluginConfiguration& cfg);
+    bool compileDSP(const std::string dspCode, const PluginConfiguration& cfg, std::string& errorMessage);
     
     bool createDSPandUI();
 

@@ -21,7 +21,7 @@ PluginLoader::PluginLoader()
 
 }
 
-bool PluginLoader::createPlugin(std::string &dspCode, int audioInputID)
+bool PluginLoader::createPlugin(std::string &dspCode, int audioInputID, std::string& errorMsg)
 {
     
     // reset everything before proceeding 
@@ -29,7 +29,7 @@ bool PluginLoader::createPlugin(std::string &dspCode, int audioInputID)
 
     pluginState.store(PluginState::PENDING_CREATION);
     
-    bool dspCompiled = faustInterpreter.compileDSP(dspCode, cfg);
+    bool dspCompiled = faustInterpreter.compileDSP(dspCode, cfg, errorMsg);
     if (!dspCompiled)
     {
         pluginState.store(PluginState::ERR_COMPILE_DSP);
