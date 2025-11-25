@@ -27,7 +27,8 @@ This project integrates the Faust IDE as a plugin directly into Wwise Authoring 
     - resizable window
 - Integrated output console
 - Fix scrolling issues in the plugin window (particularly with many parameters)
-- Fix audio duration (numLoops)
+- [x] Fix audio duration (numLoops)
+    - numLoops is disabled.
 - in-place and out-of-place support via checkbox.
 - `Windows`-only support
 - integrate within `faust2wwise`

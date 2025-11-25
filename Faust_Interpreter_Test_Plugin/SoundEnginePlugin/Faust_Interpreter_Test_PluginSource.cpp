@@ -222,7 +222,20 @@ void Faust_Interpreter_Test_PluginSource::Execute(AkAudioBuffer* out_pBuffer)
     }
     else{
         m_durationHandler.SetDuration(0.0f);
+        m_durationHandler.SetLooping(1.0f);         // @TODO : Enable user to loop endlesly. Currently this is disabled.
         m_durationHandler.ProduceBuffer(out_pBuffer);
+        // for (AkUInt32 i = 0; i < speakersAvail; ++i)
+        // {
+        //     AkReal32* AK_RESTRICT pBuf = (AkReal32* AK_RESTRICT)out_pBuffer->GetChannel(i);
+        //     // pBuf->ZeroPadToMaxFrames();
+        //     AkUInt16 uFramesProduced = 0;
+        //     while (uFramesProduced < out_pBuffer->uValidFrames)
+        //     {
+        //         // Generate output here
+        //         *pBuf++ = 0.0f;
+        //         ++uFramesProduced;
+        //     }
+        // }        
     }
 }
 
