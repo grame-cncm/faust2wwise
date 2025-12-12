@@ -60,6 +60,7 @@ Plugin.sdk.static.excludes = -- https://github.com/premake/premake-core/wiki/rem
 Plugin.sdk.static.links = -- https://github.com/premake/premake-core/wiki/links
 {
     "libfaust",
+    "libfaustwithllvm",   -- ! remove the "libfaustwithllvm" line to build the plugin with faust that is configured without llvm.
 }
 Plugin.sdk.static.libsuffix = "Source"
 Plugin.sdk.static.libdirs = -- https://github.com/premake/premake-core/wiki/libdirs
