@@ -71,7 +71,7 @@ Finally, `Docs` redirects to the online Faust documentation.
 
 
 <details>
-<summary> LINK : fatal error LNK1181: cannot open input file 'libfaustwithllvm.lib'</summary>
+<summary> linkage error : cannot open input file 'libfaustwithllvm.lib'</summary>
 <br>
 Faust is configured without `llvm` backend. Comment out the following line in the [PremakePlugin.lua](PremakePlugin.lua) script.
 ```
@@ -86,7 +86,7 @@ Plugin.sdk.static.links =
 <br>
 
 <details>
-<summary>Scrolling along the plugin window in **Preview** has visual artifacts.</summary>
+<summary>Scrolling along the plugin window in <strong>Preview</strong> has visual artifacts.</summary>
 <br>
 This is a known issue. Compiling a DSP implementation that contains a considerable number of parameters (more than can fit on a user's screen) enables scrolling, but it is currently broken and needs to be fixed.
 </details>
