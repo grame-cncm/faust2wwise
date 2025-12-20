@@ -42,8 +42,8 @@ Plugin.authoring = {}
 Plugin.sdk.static.includedirs = -- https://github.com/premake/premake-core/wiki/
 {
     "../FaustRuntime",
-    "C:/Program Files/Faust/include",
 }
+
 Plugin.sdk.static.files = -- https://github.com/premake/premake-core/wiki/files
 {
     "**.cpp",
@@ -60,12 +60,11 @@ Plugin.sdk.static.excludes = -- https://github.com/premake/premake-core/wiki/rem
 Plugin.sdk.static.links = -- https://github.com/premake/premake-core/wiki/links
 {
     "libfaust",
-    "libfaustwithllvm",   -- ! remove the "libfaustwithllvm" line to build the plugin with faust that is configured without llvm.
 }
+
 Plugin.sdk.static.libsuffix = "Source"
 Plugin.sdk.static.libdirs = -- https://github.com/premake/premake-core/wiki/libdirs
 {
-    "C:/Program Files/Faust/lib",
 }
 Plugin.sdk.static.defines = -- https://github.com/premake/premake-core/wiki/defines
 {
@@ -75,7 +74,6 @@ Plugin.sdk.static.defines = -- https://github.com/premake/premake-core/wiki/defi
 Plugin.sdk.shared.includedirs =
 {
     "../FaustRuntime",
-    "C:/Program Files/Faust/include",
 }
 Plugin.sdk.shared.files =
 {
@@ -101,7 +99,6 @@ Plugin.sdk.shared.defines =
 Plugin.authoring.includedirs =
 {
     "../FaustRuntime",
-    "C:/Program Files/Faust/include",
 }
 Plugin.authoring.files =
 {
@@ -125,5 +122,47 @@ Plugin.authoring.libdirs =
 Plugin.authoring.defines =
 {
 }
+
+-------------------------------------------------------------------------------- FAUST2WWISE ADDITIONS
+
+local function faustQuery(arg)
+    local cmd = "faust " .. arg
+    local pipe = io.popen(cmd)
+    if not pipe then
+        return nil
+    end
+
+    local result = pipe:read("*l")
+    pipe:close()
+
+    if result == "" then
+        return nil
+    end
+    
+    return result
+end
+
+local faustLibDir     = faustQuery("-libdir")
+local faustIncludeDir = faustQuery("-includedir")
+
+if not faustLibDir or not faustIncludeDir then
+    error("Faust not found. Ensure Faust is installed and available on PATH.", 1)
+else
+    -- .. add include dir into the includedirs sections
+    table.insert(Plugin.sdk.static.includedirs, faustIncludeDir)
+    table.insert(Plugin.sdk.shared.includedirs, faustIncludeDir)
+    table.insert(Plugin.authoring.includedirs, faustIncludeDir)
+
+    -- .. add include dir into the includedirs sections
+    table.insert(Plugin.sdk.static.libdirs, faustLibDir)
+
+    -- .. add libfaustwithllvm into the Plugin.sdk.static.links sections
+    if os.isfile(faustLibDir .. "/libfaustwithllvm.lib") then -- if Faust is configured with LLVM by checking if lib file exists in libdir
+        print("Faust LLVM backend detected: enabling libfaustwithllvm")
+        table.insert(Plugin.sdk.static.links, "libfaustwithllvm")
+    else
+        print("Faust LLVM backend NOT detected: building without LLVM")
+    end
+end
 
 return Plugin
