@@ -1,6 +1,6 @@
 # Faust Interpreter Test Plugin
 
-This project integrates the Faust IDE as a plugin directly into Wwise Authoring SDK, providing an environment to edit, preview, and build Faust DSP code inside Wwise. 
+This project integrates the Faust IDE as a plugin directly into Wwise Authoring SDK, providing an environment to edit, preview, and build Faust DSP code inside Wwise. Currently, it is supported only for Windows.
 
 ## Supported Features
 
@@ -30,12 +30,16 @@ This project integrates the Faust IDE as a plugin directly into Wwise Authoring 
 - [ ] Fix scrolling issues in the plugin window (particularly with many parameters)
 - [x] Fix audio duration (numLoops)
     - numLoops is disabled.
-- [ ] `Windows`-only support
+- [ ] add support for macOS
 - [ ] integrate within `faust2wwise`
 - [ ] replace faust interpreter with faust compiler
 - [x] automate Faust include and lib directories detection at premake time
 
 ## Build Instructions
+
+At first, make sure all dependencies are installed:
+- Install Faust either [from source](https://github.com/grame-cncm/faust/wiki) or using the [installer](https://github.com/grame-cncm/faust/releases).
+- Install Wwise 2024, making sure the correct `Windows SDK` is installed (for instance, for the Wwise 2024.1.12 version, see [Windows Build requirements](https://www.audiokinetic.com/en/public-library/2024.1.12_9034/?source=SDK&id=windows_releasenotes_2024_1_12.html). For other versions see [Windows Release Notes](https://www.audiokinetic.com/en/public-library/2024.1.12_9034/?source=SDK&id=windows_releasenotes.html))
 
 The template project can be built with the following steps:
 
@@ -66,20 +70,6 @@ Enabling `Out of place` makes the processing use separate input and output buffe
 Finally, `Docs` redirects to the online Faust documentation.
 
 ## Troubleshooting
-
-
-<details>
-<summary> linkage error : cannot open input file 'libfaustwithllvm.lib'</summary>
-<br>
-Faust is configured without `llvm` backend. Comment out the following line in the [PremakePlugin.lua](PremakePlugin.lua) script.
-```
-Plugin.sdk.static.links =
-{
-    "libfaust",
-    "libfaustwithllvm",       <---- comment out this line.
-}
-```
-</details>
 
 <br>
 
