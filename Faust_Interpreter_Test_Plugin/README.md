@@ -38,16 +38,18 @@ This project integrates the Faust IDE as a plugin directly into Wwise Authoring 
 ## Build Instructions
 
 At first, make sure all dependencies are installed:
-- Install Faust either [from source](https://github.com/grame-cncm/faust/wiki) or using the [installer](https://github.com/grame-cncm/faust/releases).
-- Install Wwise 2024, making sure the correct `Windows SDK` is installed (for instance, for the Wwise 2024.1.12 version, see [Windows Build requirements](https://www.audiokinetic.com/en/public-library/2024.1.12_9034/?source=SDK&id=windows_releasenotes_2024_1_12.html). For other versions see [Windows Release Notes](https://www.audiokinetic.com/en/public-library/2024.1.12_9034/?source=SDK&id=windows_releasenotes.html))
+- Install **Faust** either [from source](https://github.com/grame-cncm/faust/wiki) or using the [installer](https://github.com/grame-cncm/faust/releases).
+- Install **Wwise 2024**
+    - **WWISEROOT** must be exposed system-wide. On Windows, this should be done by opening the AudioKinetic Launcher, clicking **Install options** (tool icon) and selecting **Set environment variables**, as shown [here](extras/set_wwise_root_img.png).
+    - make sure the correct `Windows SDK` is installed (for instance, for the Wwise 2024.1.12 version, see [Windows Build requirements](https://www.audiokinetic.com/en/public-library/2024.1.12_9034/?source=SDK&id=windows_releasenotes_2024_1_12.html). For other versions see [Windows Release Notes](https://www.audiokinetic.com/en/public-library/2024.1.12_9034/?source=SDK&id=windows_releasenotes.html)).
 
 The template project can be built with the following steps:
 
-1. Enter the `Faust_Interpreter_Test_Plugin` directory
-2. Run `wp.py premake Authoring` to generate the Visual Studio solution
-3. Open the solution in Visual Studio
-4. Build the `Release` configuration
-
+```
+cd faust2wwise/Faust_Interpreter_Test_Plugin
+python path/to/wp.py premake Authoring
+python path/to/wp.py build Authoring -x <arch> -t <toolset> -c Release
+```
 
 ## Usage
 
@@ -76,7 +78,9 @@ Finally, `Docs` redirects to the online Faust documentation.
 <details>
 <summary>Scrolling along the plugin window in <strong>Preview</strong> has visual artifacts.</summary>
 <br>
+
 This is a known issue. Compiling a DSP implementation that contains a considerable number of parameters (more than can fit on a user's screen) enables scrolling, but it is currently broken and needs to be fixed.
+
 </details>
 
 <br>
@@ -84,7 +88,9 @@ This is a known issue. Compiling a DSP implementation that contains a considerab
 <details>
 <summary>Can' t loop audio in Wwise.</summary>
 <br>
+
 This feature is currently deactivated to eliminate audio artifacts. Check the [Future List](#future-list).
+
 </details>
 
 <br>
