@@ -67,7 +67,7 @@ bool ProjectFilesManager::create(std::string& filename)
 bool ProjectFilesManager::writeFile(const std::string& filename, const std::wstring& contents) const
 {   
     const std::string filepath = getFilePath(filename);
-    PluginUtils::store_utf16_file(filepath,contents);
+    return PluginUtils::store_utf16_file(filepath,contents);
 }
 
 bool ProjectFilesManager::rename(const std::string& oldName, const std::string& newName)
